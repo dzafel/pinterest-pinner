@@ -1,6 +1,6 @@
 # PinterestPinner PHP Class
 
-Pinterest API is not released yet, so there is no way to programmatically create a pin. So here is this class for.
+Pinterest API is not released yet, so there is no way to programmatically create a pin. So here is this class for - Autoposter, Autopinner, whatever you like to call it.
 
 **This is an unofficial API, and likely to change and break at any moment.**
 
