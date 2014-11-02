@@ -11,7 +11,7 @@ if (!class_exists('PinterestPinner')) {
 
     class PinterestPinner {
 
-        const VERSION = '1.0';
+        const VERSION = '1.0.1';
 
         const PINTEREST_URL = 'https://www.pinterest.com/';
         const PINTEREST_LOGIN_PATH = 'login/';
@@ -361,12 +361,17 @@ if (!class_exists('PinterestPinner')) {
                 CURLOPT_POST       => true,
                 CURLOPT_POSTFIELDS => $post_data,
                 CURLOPT_REFERER    => self::PINTEREST_URL . self::PINTEREST_LOGIN_PATH,
-                CURLOPT_HEADER     => false,
+                CURLOPT_HEADER     => true,
             ));
             $this->_content = curl_exec($this->_curl);
 
+            $this->_csrftoken = null;
+            $this->_getCSRFToken();
+
             $http_code = (int) curl_getinfo($this->_curl, CURLINFO_HTTP_CODE);
             if ($http_code === 200) {
+                $this->_content = explode("\n{\"", $this->_content);
+                $this->_content = '{"' . array_pop($this->_content);
                 $this->_content = json_decode($this->_content, true);
             }
 
@@ -401,6 +406,13 @@ if (!class_exists('PinterestPinner')) {
                 'module_path' => 'App()>ImagesFeedPage(resource=FindPinImagesResource(url=' . $this->_link . '))>Grid()>GridItems()>Pinnable(url=' . $this->_image . ', type=pinnable, link=' . $this->_link . ')#Modal(module=PinCreate())',
             );
             curl_setopt_array($this->_curl, array(
+                CURLOPT_HTTPHEADER => array_merge($this->_http_headers, array(
+                    'X-NEW-APP: 1',
+                    'X-APP-VERSION: ' . $this->_getAppVersion(),
+                    'X-Requested-With: XMLHttpRequest',
+                    'Accept: application/json, text/javascript, */*; q=0.01',
+                    'X-CSRFToken: ' . $this->_getCSRFToken(),
+                )),
                 CURLOPT_URL        => self::PINTEREST_URL . self::PINTEREST_PIN_POST_PATH,
                 CURLOPT_POSTFIELDS => $post_data,
                 CURLOPT_REFERER    => self::PINTEREST_URL,

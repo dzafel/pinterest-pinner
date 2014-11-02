@@ -72,6 +72,10 @@ $pinterest = new PinterestPinner('Your Login', 'Your Password', array(
 
 ## Version history
 
+### 1.0.1 (2014-11-02)
+
+- FIX: reload CSRF token upon login
+
 ### 1.0 (2014-06-04)
 
 - Initial release
