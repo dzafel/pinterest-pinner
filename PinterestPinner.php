@@ -30,6 +30,7 @@ if (!class_exists('PinterestPinner')) {
         private $_csrftoken = null;
         private $_http_headers = array();
         private $_error = null;
+        public $is_logged_in = false;
 
         public function __construct($login = null, $password = null, array $curl_options = array())
         {
@@ -338,6 +339,8 @@ if (!class_exists('PinterestPinner')) {
          */
         private function _postLogin()
         {
+            if ($this->is_logged_in === true) return;
+            
             $post_data = array(
                 'data' => json_encode(array(
                     'options' => array(
@@ -380,6 +383,8 @@ if (!class_exists('PinterestPinner')) {
             }
             else if (!isset($this->_content['resource_response']['data']) or !$this->_content['resource_response']['data']) {
                 throw new PinterestPinnerException('Unknown error while logging in.');
+            }else{
+                $this->is_logged_in = true;
             }
         }
 
@@ -431,7 +436,7 @@ if (!class_exists('PinterestPinner')) {
                 throw new PinterestPinnerException('Unknown error while creating a pin.');
             }
         }
-
+        
     }
 
 }
