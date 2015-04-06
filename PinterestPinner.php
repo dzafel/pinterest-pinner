@@ -31,6 +31,7 @@ if (!class_exists('PinterestPinner')) {
         private $_http_headers = array();
         private $_error = null;
         public $is_logged_in = false;
+        public $user_resources = array();
 
         public function __construct($login = null, $password = null, array $curl_options = array())
         {
@@ -436,7 +437,63 @@ if (!class_exists('PinterestPinner')) {
                 throw new PinterestPinnerException('Unknown error while creating a pin.');
             }
         }
-        
+
+        public function getUserResources(){
+
+            if ( !empty($this->user_resources) ) {
+                    return $this->user_resources;
+            }
+            
+            $this->_postLogin();
+
+            curl_setopt_array( $this->_curl, array(
+                    CURLOPT_HTTPHEADER => array_merge( $this->_http_headers, array(
+                            'X-NEW-APP: 1',
+                            'X-APP-VERSION: ' . $this->_getAppVersion(),
+                            'X-Requested-With: XMLHttpRequest',
+                            'Accept: application/json, text/javascript, */*; q=0.01',
+                            'X-CSRFToken: ' . $this->_getCSRFToken(),
+                    ) ),
+                    CURLOPT_URL        => self::PINTEREST_URL . 'me',
+                    //CURLOPT_POSTFIELDS => $post_data,
+                    CURLOPT_REFERER    => self::PINTEREST_URL,
+                    CURLOPT_HEADER      => false
+            ) );
+            $this->_content = curl_exec( $this->_curl );
+
+            if (curl_getinfo($this->_curl, CURLINFO_HTTP_CODE) == 200) {
+                $response = json_decode($this->_content, true);
+                if (isset($response['resource_data_cache'][0]['data'])){
+
+                    $user_resources = $response['resource_data_cache'][0]['data'];
+
+                    $keep = array(
+                        'last_name',
+                        'following_count',
+                        'like_count',
+                        'full_name',
+                        'first_name',
+                        'secret_board_count',
+                        'follower_count',
+                        'board_count',
+                        'username',
+                        'pin_count'
+                    );
+
+                    foreach((array)$user_resources as $slug=>$value){
+                        if (!in_array($slug,$keep)) continue;
+                        $this->user_resource[$slug] = $value;
+                    }
+
+                    return $this->user_resource;
+                }
+
+            }
+
+            throw new PinterestPinnerException( 'Error getting user resources.' );
+
+        }
+
     }
 
 }
