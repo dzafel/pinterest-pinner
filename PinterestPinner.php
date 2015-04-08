@@ -329,6 +329,19 @@ if (!class_exists('PinterestPinner')) {
                 $this->_csrftoken = $match[1];
                 return $this->_csrftoken;
             }
+            
+            //Sometimes it returns a HTTP/1.1 100 Continue HTTP/1.1 429 string.
+            //try to get the JSON content and return the error.
+
+            preg_match('/\{(.*)\}/', $this->_content, $match);
+
+            if (isset($match[0]) and $match[0]) {
+                $json = json_decode($match[0], true);
+                if (isset($json['resource_response']['error']['message'])){
+                    $message = $json['resource_response']['error']['message'];
+                    throw new PinterestPinnerException($message);
+                }
+            }
 
             throw new PinterestPinnerException('Error getting CSRFToken.');
         }
