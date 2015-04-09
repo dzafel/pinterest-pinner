@@ -30,8 +30,6 @@ if (!class_exists('PinterestPinner')) {
         private $_csrftoken = null;
         private $_http_headers = array();
         private $_error = null;
-        public $is_logged_in = false;
-        public $user_resources = array();
 
         public function __construct($login = null, $password = null, array $curl_options = array())
         {
@@ -345,22 +343,6 @@ if (!class_exists('PinterestPinner')) {
 
             throw new PinterestPinnerException('Error getting CSRFToken.');
         }
-        
-        public function isLoggedIn(){
-            
-            $logged = false;
-            
-            try {
-                $this->_postLogin();
-                $logged = $this->is_logged_in;
-            }
-            catch (PinterestPinnerException $e) {
-                $this->_error = $e->getMessage();
-            }
-            
-            return $logged;
-            
-        }
 
         /**
          * Try to log in to Pinterest.
@@ -369,8 +351,6 @@ if (!class_exists('PinterestPinner')) {
          */
         private function _postLogin()
         {
-            if ($this->is_logged_in === true) return;
-            
             $post_data = array(
                 'data' => json_encode(array(
                     'options' => array(
@@ -413,8 +393,6 @@ if (!class_exists('PinterestPinner')) {
             }
             else if (!isset($this->_content['resource_response']['data']) or !$this->_content['resource_response']['data']) {
                 throw new PinterestPinnerException('Unknown error while logging in.');
-            }else{
-                $this->is_logged_in = true;
             }
         }
 
@@ -465,275 +443,6 @@ if (!class_exists('PinterestPinner')) {
             else if (!isset($this->_content['resource_response']['data']['id']) or !$this->_content['resource_response']['data']['id']) {
                 throw new PinterestPinnerException('Unknown error while creating a pin.');
             }
-        }
-        
-        /**
-         * Get all pins for a board.
-         * @param type $board - like in getUserBoards()
-         * @param type $max - maximum number of pins to get
-         * @param type $stop_at_pin_id - stop if that pin ID is met.  This pin ID could be saved somewhere and compared when getBoardPins is executed later.
-         * @return \Exception
-         */
-        
-        public function getBoardPins($board,$max=0,$stop_at_pin_id=null){
-            $bookmark = null;
-            $board_page = 0;
-            $board_pins = array();
-            
-            while ($bookmark != '-end-') { //end loop when bookmark "-end-" is returned by pinterest
-                try {
-                    
-                    $query = $this->getPageBoardPins($board,$bookmark);
-                    
-                    $bookmark = $query['bookmark'];
-                    
-                    if (isset($query['pins'])){
-
-                        $page_pins = $query['pins'];
-
-                        //stop if this pin ID is found
-                        if ($stop_at_pin_id){
-                            foreach($page_pins as $key=>$pin){
-                                if (isset($pin['id']) && $pin['id']==$stop_at_pin_id){
-                                    $page_pins = array_slice($page_pins, 0, $key+1);
-                                    $bookmark = '-end-';
-                                    break;
-                                }
-                            }
-                        }
-
-                        $board_pins = array_merge($board_pins,$page_pins);
-
-                        //limit reached
-                        if ( ($max) && ( count($board_pins)> $max) ){
-                            $board_pins = array_slice($board_pins, 0, $max);
-                            $bookmark = '-end-';
-                            break;
-                        }
-
-                    }
-
-                    $board_page++;
-                    
-                }catch (Exception $e) {
-                    return $e;
-                }
-            }
-            
-            return $board_pins;
-            
-        }
-        
-        /**
-         * 
-         * @param array $board
-         * @param type $bookmark Used to handle pagination.  If null, starts from the beginning.
-         * @return array where 'pins' are the fetched pins and 'bookmark' is the token needed for pagination.
-         * @throws PinterestPinnerException
-         */
-
-        private function getPageBoardPins($board, $bookmark = null){
-
-            $page_pins = array();
-            $user_resources = $this->getUserResources();
-            $user_url = self::PINTEREST_URL . $user_resources['username']. '/';
-            //$board_url = sprintf('/%1$s/%2$s/',$user_resources['username'],$board['slug']);
-            $request_url = 'https://www.pinterest.com/resource/BoardFeedResource/get/';
-
-            if (isset($user_resources['username']) && isset($board['id'])){
-                
-                $post_data_options = array(
-                    'board_id'      => $board['id'],
-                    //'board_url'     => $board['url'],
-                    'board_layout'  => 'default',
-                    'prepend'       => true,
-                    'page_size'     => null,
-                    'access'        => array('write','delete'),
-                    'bookmarks'     => (array)$bookmark
-                );
-
-                if ($bookmark){ //used for pagination. Bookmark is defined when it is not the first page.
-                    $post_data_options['data']['options']['bookmarks'] = $bookmark;
-                }
-
-                $post_data = array(
-                    'data' => json_encode(array(
-                        'options' => $post_data_options,
-                        'context' => new stdClass,
-                    )),
-                    //'source_url' => $board_url,
-                    'module_path' => sprintf('UserProfilePage(resource=UserResource(username=%1$s, invite_code=null))>UserProfileContent(resource=UserResource(username=%1$s, invite_code=null))>UserBoards()>Grid(resource=ProfileBoardsResource(username=%1$s))>GridItems(resource=ProfileBoardsResource(username=%1$s))>Board(show_board_context=false, show_user_icon=false, view_type=boardCoverImage, component_type=1, resource=BoardResource(board_id=%2$d))',
-                            $user_resources['username'],
-                            $board['id']
-                    ),
-                    '_' => time()*1000 //js timestamp
-                );
-
-                curl_setopt_array( $this->_curl, array(
-                        CURLOPT_HTTPHEADER => array_merge( $this->_http_headers, array(
-                                'X-NEW-APP: 1',
-                                'X-APP-VERSION: ' . $this->_getAppVersion(),
-                                'X-Requested-With: XMLHttpRequest',
-                                'Accept: application/json, text/javascript, */*; q=0.01',
-                                'X-CSRFToken: ' . $this->_getCSRFToken(),
-                        ) ),
-                        CURLOPT_URL        => $request_url,
-                        CURLOPT_POSTFIELDS => $post_data,
-                        CURLOPT_REFERER    => $user_url,
-                        CURLOPT_HEADER      => false
-                    ) );
-                
-                $this->_content = curl_exec( $this->_curl );   
-                
-                if (curl_getinfo($this->_curl, CURLINFO_HTTP_CODE) == 200) {
-
-                    $response = json_decode($this->_content, true);
-
-                    //pins
-                    if (isset($response['resource_data_cache'][0]['data'])){
-                        
-                        $page_pins = $response['resource_data_cache'][0]['data'];
-
-                        //remove items that have not the "pin" type (like module items)
-                        $page_pins = array_filter(
-                            $page_pins,
-                            function ($e) {
-                                return $e['type'] == 'pin';
-                            }
-                        );
-                        
-                    }
-                    
-                    //bookmark (pagination)
-                    if (!isset($response['resource']['options']['bookmarks'][0])){
-                        throw new PinterestPinnerException( 'getPageBoardPins(): Missing bookmark' );
-                    }else{
-                        $bookmark = $response['resource']['options']['bookmarks'][0];
-                    }
-                    
-                    return array('pins'=>$page_pins,'bookmark'=>$bookmark);
-
-                }
-            }
-
-
-            throw new PinterestPinnerException( 'Error getting user boards.' );
-        }
-        
-        public function getUserBoards(){
-            
-            if ( !empty($this->user_boards) ) {
-                    return $this->user_boards;
-            }
-
-            $user_resources = $this->getUserResources();
-            $user_url = self::PINTEREST_URL . $user_resources['username']. '/';
-            $boards_url = 'https://www.pinterest.com/resource/BoardPickerBoardsResource/get/';
-
-            if (isset($user_resources['username'])){
-   
-                $post_data = array(
-                    'data' => json_encode(array(
-                        'options' => array(
-                            'filter' => 'all',
-                            'field_set_key' => 'board_picker',
-                            'allow_stale' => true,
-                        ),
-                        'context' => new stdClass,
-                    )),
-                    'source_url' => '/'.$user_resources['username'].'/boards/',
-                    'module_path' => sprintf('App()>UserProfilePage(resource=UserResource(username=%1$s))>UserInfoBar(tab=boards, spinner=[object Object], resource=UserResource(username=%1$s, invite_code=null))',
-                            $user_resources['username']),
-                    '_' => time()*1000 //js timestamp
-                );
-
-
-                curl_setopt_array( $this->_curl, array(
-                        CURLOPT_HTTPHEADER => array_merge( $this->_http_headers, array(
-                                'X-NEW-APP: 1',
-                                'X-APP-VERSION: ' . $this->_getAppVersion(),
-                                'X-Requested-With: XMLHttpRequest',
-                                'Accept: application/json, text/javascript, */*; q=0.01',
-                                'X-CSRFToken: ' . $this->_getCSRFToken(),
-                        ) ),
-                        CURLOPT_URL        => $boards_url,
-                        CURLOPT_POSTFIELDS => $post_data,
-                        CURLOPT_REFERER    => $user_url,
-                        CURLOPT_HEADER      => false
-                    ) );
-                $this->_content = curl_exec( $this->_curl );                 
-                if (curl_getinfo($this->_curl, CURLINFO_HTTP_CODE) == 200) {
-
-                    $response = json_decode($this->_content, true);
-
-                    if (isset($response['resource_data_cache'][0]['data']['all_boards'])){
-
-                        $this->user_boards = $response['resource_data_cache'][0]['data']['all_boards'];
-                        return $this->user_boards;
-                    }
-
-                }
-            }
-
-
-            throw new PinterestPinnerException( 'Error getting user boards.' );
-
-        }
-
-        public function getUserResources(){
-
-            if ( !empty($this->user_resources) ) {
-                    return $this->user_resources;
-            }
-            
-            $this->_postLogin();
-
-            curl_setopt_array( $this->_curl, array(
-                    CURLOPT_HTTPHEADER => array_merge( $this->_http_headers, array(
-                            'X-NEW-APP: 1',
-                            'X-APP-VERSION: ' . $this->_getAppVersion(),
-                            'X-Requested-With: XMLHttpRequest',
-                            'Accept: application/json, text/javascript, */*; q=0.01',
-                            'X-CSRFToken: ' . $this->_getCSRFToken(),
-                    ) ),
-                    CURLOPT_URL        => self::PINTEREST_URL . 'me',
-                    //CURLOPT_POSTFIELDS => $post_data,
-                    CURLOPT_REFERER    => self::PINTEREST_URL,
-                    CURLOPT_HEADER      => false
-            ) );
-            $this->_content = curl_exec( $this->_curl );
-
-            if (curl_getinfo($this->_curl, CURLINFO_HTTP_CODE) == 200) {
-                $response = json_decode($this->_content, true);
-                if (isset($response['resource_data_cache'][0]['data'])){
-
-                    $user_resources = $response['resource_data_cache'][0]['data'];
-
-                    $keep = array(
-                        'last_name',
-                        'following_count',
-                        'like_count',
-                        'full_name',
-                        'first_name',
-                        'secret_board_count',
-                        'follower_count',
-                        'board_count',
-                        'username',
-                        'pin_count'
-                    );
-
-                    foreach((array)$user_resources as $slug=>$value){
-                        if (!in_array($slug,$keep)) continue;
-                        $this->user_resource[$slug] = $value;
-                    }
-
-                    return $this->user_resource;
-                }
-
-            }
-
-            throw new PinterestPinnerException( 'Error getting user resources.' );
-
         }
 
     }
