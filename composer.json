@@ -1,0 +1,28 @@
+{
+    "name": "dzafel/pinterest-pinner",
+    "version": "2.0",
+    "description": "Post to pinterest programatically",
+    "keywords": ["pinterest"],
+    "license": "GPL-2.0",
+    "authors": [
+        {
+            "name": "Paweł Ciesielski",
+            "email": "pawel@ciesielski.us",
+            "role": "Original Author"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/dzafel/pinterest-pinner"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "~5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PinterestPinner\\": "PinterestPinner/"
+        }
+    }
+}

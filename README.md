@@ -6,71 +6,47 @@ Pinterest API is not released yet, so there is no way to programmatically create
 
 _PinterestPinner is not a way to avoid any Pinterest terms, conditions, rules and regulations. Please use the class in accordance with all Pinterest rules. If you abuse the service you will be banned there._
 
+**Please follow the PSR-2 coding standards if you want to create a pull request.**
+
+
 ## How to use it?
 
-Short method:
+To add a new pin:
 
 ```php
-require_once 'PinterestPinner.php';
-$pinterest = new PinterestPinner('Your Login', 'Your Password');
-$result = $pinterest->pin('Board ID', 'Image URL', 'Description', 'URL');
-```
-
-Another short method:
-
-```php
-require_once 'PinterestPinner.php';
-$pinterest = new PinterestPinner('Your Login', 'Your Password');
-$result = $pinterest->pin(array(
-    'board' => 'Board ID',
-    'image' => 'Image URL',
-    'description' => 'Description',
-    'link' => 'URL',
-));
-```
-
-Chained method:
-
-```php
-require_once 'PinterestPinner.php';
-$pinterest = new PinterestPinner;
-$pinterest->setLogin('Your Pinterest Login')
-    ->setPassword('Your Pinterest Password')
-    ->setBoardID('Pinterest Board ID')
-    ->setImage('Image URL')
-    ->setDescription('Pin Description')
-    ->setLink('Pin Link')
-    ->pin();
-```
-
-Then to check if pin has been added successfully:
-
-```php
-if (false === $result) {
-    echo 'Error: ' . $pinterest->getError();
-}
-else {
-    echo 'Pin Created, ID: ' . $pinterest->getPinID();
+try {
+    $pinterest = new PinterestPinner\Pinner;
+    $pin_id = $pinterest->setLogin('Your Pinterest Login')
+        ->setPassword('Your Pinterest Password')
+        ->setBoardID('Pinterest Board ID')
+        ->setImage('Image URL')
+        ->setDescription('Pin Description')
+        ->setLink('Pin Link')
+        ->pin();
+} catch (PinterestPinner\PinnerException $e) {
+    echo $e->getMessage();
 }
 ```
 
-You can also specify cURL options by adding third argument to constructor, i.e.:
+You can also get additional info:
 
 ```php
-$pinterest = new PinterestPinner('Your Login', 'Your Password', array(
-    CURLOPT_COOKIEFILE     => 'cookie.txt',
-    CURLOPT_COOKIEJAR      => 'cookie.txt',
-    CURLOPT_CONNECTTIMEOUT => 30,
-    CURLOPT_TIMEOUT        => 30,
-));
+// Get a list of boards
+$boards = $pinterest->getBoards();
+
+// Get a list of pins
+$pins = $pinterest->getPins();
+
+// Get logged in user data
+$user = $pinterest->getUserData();
 ```
-
-## Requirements
-
-- PHP 5.2.1
-- cURL
 
 ## Version history
+
+### 2.0 (2015-04-09)
+
+- Library is now composer friendly
+- Added Guzzle dependency
 
 ### 1.0.1 (2014-11-02)
 
