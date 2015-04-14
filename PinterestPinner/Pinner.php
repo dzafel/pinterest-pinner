@@ -62,11 +62,16 @@ class Pinner
      * @var Pinterest App version loaded from pinterest.com
      */
     private $_app_version = null;
+    
+    /**
+     * @var Pinterest page loaded headers
+     */
+    protected $_response_headers = null;
 
     /**
      * @var Pinterest page loaded content
      */
-    private $_response_content = null;
+    protected $_response_content = null;
 
     /**
      * @var CSRF token loaded from pinterest.com
@@ -246,7 +251,7 @@ class Pinner
      * @return string
      * @throws PinnerException
      */
-    private function _loadContent($url, array $post_data = null, $referer = '')
+    protected function _loadContent($url, array $post_data = null, $referer = '')
     {
         if ($post_data) {
             
