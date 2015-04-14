@@ -457,10 +457,16 @@ class Pinner
      */
     public function getPins($board_id = null)
     {
-        $response = $this->_api_client->get('/v3/pidgets/users/' . urlencode($this->_login) . '/pins/', array(
-            'headers' => $this->_http_headers,
-            'verify' => false,
-        ));
+        
+        try {
+            $response = $this->_api_client->get('/v3/pidgets/users/' . urlencode($this->_login) . '/pins/', array(
+                'headers' => $this->_http_headers,
+                'verify' => false,
+            ));
+        } catch (\Exception $e) {
+            return $e;
+        }
+        
         if ($response->getStatusCode() === 200) {
             $collection = $response->json();
             if (isset($collection['data']['pins'])) {
