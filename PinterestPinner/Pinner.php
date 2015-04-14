@@ -27,6 +27,11 @@ class Pinner
      * @var bool
      */
     public $is_logged_in = false;
+    
+    /**
+     * @var Pinterest user data
+     */
+    public $userData = array();
 
     /**
      * @var Pinterest account login
@@ -57,11 +62,16 @@ class Pinner
      * @var Pinterest App version loaded from pinterest.com
      */
     private $_app_version = null;
+    
+    /**
+     * @var Pinterest page loaded headers
+     */
+    protected $_response_headers = null;
 
     /**
      * @var Pinterest page loaded content
      */
-    private $_response_content = null;
+    protected $_response_content = null;
 
     /**
      * @var CSRF token loaded from pinterest.com
@@ -241,28 +251,46 @@ class Pinner
      * @return string
      * @throws PinnerException
      */
-    private function _loadContent($url, array $post_data = null, $referer = '')
+    protected function _loadContent($url, array $post_data = null, $referer = '')
     {
         if ($post_data) {
-            $response = $this->_http_client->post($url, array(
-                'headers' => array_merge($this->_http_headers, array(
-                    'X-NEW-APP' => '1',
-                    'X-APP-VERSION' => $this->_getAppVersion(),
-                    'X-Requested-With' => 'XMLHttpRequest',
-                    'Accept' => 'application/json, text/javascript, */*; q=0.01',
-                    'X-CSRFToken' => $this->_getCSRFToken(),
-                    'Referer' => self::PINTEREST_URL . $referer,
-                )),
-                'verify' => false,
-                'cookies' => true,
-                'body' => $post_data,
-            ));
+            
+            try {
+
+                $response = $this->_http_client->post($url, array(
+                    'headers' => array_merge($this->_http_headers, array(
+                        'X-NEW-APP' => '1',
+                        'X-APP-VERSION' => $this->_getAppVersion(),
+                        'X-Requested-With' => 'XMLHttpRequest',
+                        'Accept' => 'application/json, text/javascript, */*; q=0.01',
+                        'X-CSRFToken' => $this->_getCSRFToken(),
+                        'Referer' => self::PINTEREST_URL . $referer,
+                    )),
+                    'verify' => false,
+                    'cookies' => true,
+                    'body' => $post_data,
+                ));
+
+            } catch (\Exception $e) {
+
+                return $e;
+
+            }
+            
+            
+            
         } else {
-            $response = $this->_http_client->get($url, array(
-                'headers' => $this->_http_headers,
-                'verify' => false,
-                'cookies' => true,
-            ));
+            
+            try {
+                $response = $this->_http_client->get($url, array(
+                    'headers' => $this->_http_headers,
+                    'verify' => false,
+                    'cookies' => true,
+                ));
+            } catch (\Exception $e) {
+                return $e;
+            }
+
         }
 
         $code = (int) substr($response->getStatusCode(), 0, 2);
@@ -290,15 +318,21 @@ class Pinner
         }
 
         if (!$this->_response_content) {
-            $this->_loadContent('/login/');
+            try {
+                $this->_loadContent('/login/');
+            } catch (\Exception $e) {
+                return $e;
+            }
         }
 
-        preg_match('/P\.scout\.init\((\{.+\})\);/isU', $this->_response_content, $match);
-        if (isset($match[1]) and $match[1]) {
-            $app_json = @json_decode($match[1], true);
-            if (is_array($app_json) and isset($app_json['context']['app_version']) and $app_json['context']['app_version']) {
-                $this->_app_version = $app_json['context']['app_version'];
-                return $this->_app_version;
+        if (is_string($this->_response_content)){
+            preg_match('/P\.scout\.init\((\{.+\})\);/isU', $this->_response_content, $match);
+            if (isset($match[1]) and $match[1]) {
+                $app_json = @json_decode($match[1], true);
+                if (is_array($app_json) and isset($app_json['context']['app_version']) and $app_json['context']['app_version']) {
+                    $this->_app_version = $app_json['context']['app_version'];
+                    return $this->_app_version;
+                }
             }
         }
 
@@ -319,7 +353,11 @@ class Pinner
         }
 
         if (!$this->_response_content) {
-            $this->_loadContent($url);
+            try {
+                $this->_loadContent($url);
+            } catch (\Exception $e) {
+                return $e;
+            }
         }
 
         if (isset($this->_response_headers['Set-Cookie'])) {
@@ -360,7 +398,12 @@ class Pinner
             'source_url' => '/login/',
             'module_path' => 'App()>LoginPage()>Login()>Button(class_name=primary, text=Log In, type=submit, size=large)',
         );
-        $this->_loadContent('/resource/UserSessionResource/create/', $post_data, '/login/');
+
+        try {
+            $this->_loadContent('/resource/UserSessionResource/create/', $post_data, '/login/');
+        } catch (\Exception $e) {
+            return $e;
+        }
 
         // Force reload CSRF token, it's different for logged in user
         $this->_csrftoken = null;
@@ -400,7 +443,11 @@ class Pinner
             'module_path' => 'App()>ImagesFeedPage(resource=FindPinImagesResource(url=' . $this->_link . '))>Grid()>GridItems()>Pinnable(url=' . $this->_image . ', type=pinnable, link=' . $this->_link . ')#Modal(module=PinCreate())',
         );
 
-        $this->_loadContent('/resource/PinResource/create/', $post_data, '/');
+        try {
+            $this->_loadContent('/resource/PinResource/create/', $post_data, '/');
+        } catch (\Exception $e) {
+            return $e;
+        }
 
         if (isset($this->_response_content['resource_response']['error']) and $this->_response_content['resource_response']['error']) {
             throw new PinnerException($this->_response_content['resource_response']['error']);
@@ -420,10 +467,16 @@ class Pinner
      */
     public function getPins($board_id = null)
     {
-        $response = $this->_api_client->get('/v3/pidgets/users/' . urlencode($this->_login) . '/pins/', array(
-            'headers' => $this->_http_headers,
-            'verify' => false,
-        ));
+        
+        try {
+            $response = $this->_api_client->get('/v3/pidgets/users/' . urlencode($this->_login) . '/pins/', array(
+                'headers' => $this->_http_headers,
+                'verify' => false,
+            ));
+        } catch (\Exception $e) {
+            return $e;
+        }
+        
         if ($response->getStatusCode() === 200) {
             $collection = $response->json();
             if (isset($collection['data']['pins'])) {
@@ -469,20 +522,30 @@ class Pinner
      */
     public function getUserData()
     {
-        $this->_postLogin();
+        
+        if ($this->userData) return $this->userData;
 
-        $this->_loadContent('/me/');
+        try {
+            $this->_postLogin();
+            $this->_loadContent('/me/');
+        } catch (\Exception $e) {
+                return $e;
+        }
 
-        preg_match('/P\.start\.start\((\{.+\})\);/isU', $this->_response_content, $match);
-        if (isset($match[1]) and $match[1]) {
-            $app_json = @json_decode($match[1], true);
-            if (isset($app_json['resourceDataCache'][0]['data'])) {
-                if (isset($app_json['resourceDataCache'][0]['data']['repins_from'])) {
-                    unset($app_json['resourceDataCache'][0]['data']['repins_from']);
+        if (is_string($this->_response_content)){
+            preg_match('/P\.start\.start\((\{.+\})\);/isU', $this->_response_content, $match);
+            if (isset($match[1]) and $match[1]) {
+                $app_json = @json_decode($match[1], true);
+                if (isset($app_json['resourceDataCache'][0]['data'])) {
+                    if (isset($app_json['resourceDataCache'][0]['data']['repins_from'])) {
+                        unset($app_json['resourceDataCache'][0]['data']['repins_from']);
+                    }
+                    $this->userData = $app_json['resourceDataCache'][0]['data'];
+                    return $this->userData;
                 }
-                return $app_json['resourceDataCache'][0]['data'];
             }
         }
+
         throw new PinnerException('Unknown error while getting user data.');
     }
 }
