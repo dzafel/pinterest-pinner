@@ -27,6 +27,11 @@ class Pinner
      * @var bool
      */
     public $is_logged_in = false;
+    
+    /**
+     * @var Pinterest user data
+     */
+    public $userData = array();
 
     /**
      * @var Pinterest account login
@@ -512,6 +517,8 @@ class Pinner
      */
     public function getUserData()
     {
+        
+        if ($this->userData) return $this->userData;
 
         try {
             $this->_postLogin();
@@ -528,7 +535,8 @@ class Pinner
                     if (isset($app_json['resourceDataCache'][0]['data']['repins_from'])) {
                         unset($app_json['resourceDataCache'][0]['data']['repins_from']);
                     }
-                    return $app_json['resourceDataCache'][0]['data'];
+                    $this->userData = $app_json['resourceDataCache'][0]['data'];
+                    return $this->userData;
                 }
             }
         }
