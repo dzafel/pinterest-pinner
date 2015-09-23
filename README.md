@@ -8,6 +8,21 @@ _PinterestPinner is not a way to avoid any Pinterest terms, conditions, rules an
 
 **Please follow the PSR-2 coding standards if you would like to create a pull request.**
 
+## Installation
+
+You can easily install PinterestPinner with the following command:
+
+`composer require dzafel/pinterest-pinner:dev-master`
+
+or alternatively, include a dependency for `dzafel/pinterest-pinner` in your `composer.json` file. For example:
+
+```json
+{
+    "require": {
+        "dzafel/pinterest-pinner": "dev-master"
+    }
+}
+```
 
 ## How to use it?
 
