@@ -29,6 +29,11 @@ class Pinner
     public $is_logged_in = false;
 
     /**
+     * @var array
+     */
+    public $user_data = array();
+
+    /**
      * @var Pinterest account login
      */
     private $_login = null;
@@ -471,6 +476,10 @@ class Pinner
      */
     public function getUserData()
     {
+        if (count($this->user_data)) {
+            return $this->user_data;
+        }
+
         $this->_postLogin();
 
         $this->_loadContent('/me/');
@@ -479,11 +488,12 @@ class Pinner
             preg_match('/P\.start\.start\((\{.+\})\);/isU', $this->_response_content, $match);
             if (isset($match[1]) and $match[1]) {
                 $app_json = @json_decode($match[1], true);
-                if (isset($app_json['resourceDataCache'][0]['data'])) {
+                if (isset($app_json['resourceDataCache'][0]['data']) and is_array($app_json['resourceDataCache'][0]['data'])) {
                     if (isset($app_json['resourceDataCache'][0]['data']['repins_from'])) {
                         unset($app_json['resourceDataCache'][0]['data']['repins_from']);
                     }
-                    return $app_json['resourceDataCache'][0]['data'];
+                    $this->user_data = $app_json['resourceDataCache'][0]['data'];
+                    return $this->user_data;
                 }
             }
         }
