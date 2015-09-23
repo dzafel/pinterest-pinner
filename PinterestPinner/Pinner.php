@@ -293,12 +293,14 @@ class Pinner
             $this->_loadContent('/login/');
         }
 
-        preg_match('/P\.main\.start\((\{.+\})\);/isU', $this->_response_content, $match);
-        if (isset($match[1]) and $match[1]) {
-            $app_json = @json_decode($match[1], true);
-            if (is_array($app_json) and isset($app_json['context']['app_version']) and $app_json['context']['app_version']) {
-                $this->_app_version = $app_json['context']['app_version'];
-                return $this->_app_version;
+        if (is_string($this->_response_content)) {
+            preg_match('/P\.main\.start\((\{.+\})\);/isU', $this->_response_content, $match);
+            if (isset($match[1]) and $match[1]) {
+                $app_json = @json_decode($match[1], true);
+                if (is_array($app_json) and isset($app_json['context']['app_version']) and $app_json['context']['app_version']) {
+                    $this->_app_version = $app_json['context']['app_version'];
+                    return $this->_app_version;
+                }
             }
         }
 
@@ -473,14 +475,16 @@ class Pinner
 
         $this->_loadContent('/me/');
 
-        preg_match('/P\.start\.start\((\{.+\})\);/isU', $this->_response_content, $match);
-        if (isset($match[1]) and $match[1]) {
-            $app_json = @json_decode($match[1], true);
-            if (isset($app_json['resourceDataCache'][0]['data'])) {
-                if (isset($app_json['resourceDataCache'][0]['data']['repins_from'])) {
-                    unset($app_json['resourceDataCache'][0]['data']['repins_from']);
+        if (is_string($this->_response_content)) {
+            preg_match('/P\.start\.start\((\{.+\})\);/isU', $this->_response_content, $match);
+            if (isset($match[1]) and $match[1]) {
+                $app_json = @json_decode($match[1], true);
+                if (isset($app_json['resourceDataCache'][0]['data'])) {
+                    if (isset($app_json['resourceDataCache'][0]['data']['repins_from'])) {
+                        unset($app_json['resourceDataCache'][0]['data']['repins_from']);
+                    }
+                    return $app_json['resourceDataCache'][0]['data'];
                 }
-                return $app_json['resourceDataCache'][0]['data'];
             }
         }
         throw new PinnerException('Unknown error while getting user data.');
