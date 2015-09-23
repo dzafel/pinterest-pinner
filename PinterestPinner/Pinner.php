@@ -64,11 +64,6 @@ class Pinner
     private $_app_version = null;
 
     /**
-     * @var Pinterest page loaded content
-     */
-    private $_response_content = null;
-
-    /**
      * @var CSRF token loaded from pinterest.com
      */
     private $_csrftoken = null;
@@ -87,6 +82,11 @@ class Pinner
      * @var \GuzzleHttp\Client
      */
     private $_api_client = null;
+
+    /**
+     * @var Pinterest page loaded content
+     */
+    protected $_response_content = null;
 
     /*
      * Initialize Guzzle Client and set default variables.
@@ -246,7 +246,7 @@ class Pinner
      * @return string
      * @throws PinnerException
      */
-    private function _loadContent($url, array $post_data = null, $referer = '')
+    protected function _loadContent($url, array $post_data = null, $referer = '')
     {
         if ($post_data) {
             $response = $this->_http_client->post($url, array(
