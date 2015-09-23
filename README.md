@@ -60,7 +60,7 @@ $user = $pinterest->getUserData();
 
 ### 2.0.1 (2015-09-23)
 
-- FIX: init function name changed from P.scout.init to P.main.start ([#14](/dzafel/pinterest-pinner/issues/14))
+- FIX: init function name changed from P.scout.init to P.main.start ([#14](/../../issues/14))
 
 ### 2.0 (2015-04-09)
 
