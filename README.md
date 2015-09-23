@@ -61,6 +61,9 @@ $user = $pinterest->getUserData();
 ### 2.0.1 (2015-09-23)
 
 - FIX: init function name changed from P.scout.init to P.main.start ([#14](/../../issues/14))
+- FIX: do `preg_match()` only if returned value is a string
+- NEW: added public `$user_data` variable
+- NEW: changed some private methods and vars to protected so class can be extended
 
 ### 2.0 (2015-04-09)
 
