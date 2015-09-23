@@ -293,7 +293,7 @@ class Pinner
             $this->_loadContent('/login/');
         }
 
-        preg_match('/P\.scout\.init\((\{.+\})\);/isU', $this->_response_content, $match);
+        preg_match('/P\.main\.start\((\{.+\})\);/isU', $this->_response_content, $match);
         if (isset($match[1]) and $match[1]) {
             $app_json = @json_decode($match[1], true);
             if (is_array($app_json) and isset($app_json['context']['app_version']) and $app_json['context']['app_version']) {
@@ -302,7 +302,7 @@ class Pinner
             }
         }
 
-        throw new PinnerException('Error getting App Version from P.scout.init() JSON data.');
+        throw new PinnerException('Error getting App Version from P.main.start() JSON data.');
     }
 
     /**
