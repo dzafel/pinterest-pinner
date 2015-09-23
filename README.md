@@ -6,7 +6,7 @@ Pinterest API is not released yet, so there is no way to programmatically create
 
 _PinterestPinner is not a way to avoid any Pinterest terms, conditions, rules and regulations. Please use the class in accordance with all Pinterest rules. If you abuse the service you will be banned there._
 
-**Please follow the PSR-2 coding standards if you want to create a pull request.**
+**Please follow the PSR-2 coding standards if you would like to create a pull request.**
 
 
 ## How to use it?
@@ -43,10 +43,14 @@ $user = $pinterest->getUserData();
 
 ## Version history
 
+### 2.0.1 (2015-09-23)
+
+- FIX: init function name changed from P.scout.init to P.main.start (#14)
+
 ### 2.0 (2015-04-09)
 
-- Library is now composer friendly
-- Added Guzzle dependency
+- NEW: Library is now composer friendly
+- NEW: Added Guzzle dependency
 
 ### 1.0.1 (2014-11-02)
 
