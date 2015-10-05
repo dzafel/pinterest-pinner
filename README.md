@@ -58,10 +58,15 @@ $user = $pinterest->getUserData();
 
 ## Version history
 
+### 2.0.2 (2015-10-05)
+
+- FIX: typo in init function - `P.start.start` instead of `P.main.start` ([#15](/../../issues/15))
+- FIX: `getBoards()` always returned empty array, because `getPins()` returned pins collection, not full response json ([#15](/../../issues/15))
+
 ### 2.0.1 (2015-09-23)
 
-- FIX: init function name changed from P.scout.init to P.main.start ([#14](/../../issues/14))
-- FIX: do `preg_match()` only if returned value is a string
+- FIX: init function name changed from `P.scout.init` to `P.main.start` ([#14](/../../issues/14))
+- FIX: do `preg_match()` only if response value is a string
 - NEW: added public `$user_data` variable
 - NEW: changed some private methods and vars to protected so class can be extended
 

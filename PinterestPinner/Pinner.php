@@ -238,6 +238,86 @@ class Pinner
     }
 
     /**
+     * Get user's pins.
+     *
+     * @param $board_id
+     * @return array
+     * @throws PinnerException
+     */
+    public function getPins($board_id = null)
+    {
+        $response = $this->_api_client->get('/v3/pidgets/users/' . urlencode($this->_login) . '/pins/', array(
+            'headers' => $this->_http_headers,
+            'verify' => false,
+        ));
+        if ($response->getStatusCode() === 200) {
+            $collection = $response->json();
+            if (isset($collection['data']['pins'])) {
+                if ($board_id) {
+                    $pins = array();
+                    foreach ($collection['data']['pins'] as $pin) {
+                        if ($pin['board']['id'] == $board_id) {
+                            $pins[] = $pin;
+                        }
+                    }
+                    return $pins;
+                }
+                return $collection['data']['pins'];
+            }
+            return array();
+        }
+        throw new PinnerException('Unknown error while getting pins list.');
+    }
+
+    /**
+     * Get user's boards.
+     *
+     * @return array
+     * @throws PinnerException
+     */
+    public function getBoards()
+    {
+        $pins = $this->getPins();
+        $boards = array();
+        if (is_array($pins)) {
+            foreach ($pins as $pin) {
+                if (is_array($pin) and isset($pin['board']['id'], $pin['board']['name'])) {
+                    $boards[$pin['board']['id']] = $pin['board']['name'];
+                }
+            }
+        }
+        return $boards;
+    }
+
+    /**
+     * Get logged in user data.
+     *
+     * @return mixed
+     * @throws PinnerException
+     */
+    public function getUserData()
+    {
+        if (count($this->user_data)) {
+            return $this->user_data;
+        }
+
+        $this->_postLogin();
+
+        $this->_loadContent('/me/');
+
+        $app_json = $this->_responseToArray();
+        if ($app_json and isset($app_json['resourceDataCache'][0]['data']) and is_array($app_json['resourceDataCache'][0]['data'])) {
+            if (isset($app_json['resourceDataCache'][0]['data']['repins_from'])) {
+                unset($app_json['resourceDataCache'][0]['data']['repins_from']);
+            }
+            $this->user_data = $app_json['resourceDataCache'][0]['data'];
+            return $this->user_data;
+        }
+
+        throw new PinnerException('Unknown error while getting user data.');
+    }
+
+    /**
      * Set cURL url and get the content from curl_exec() call.
      *
      * @param string $url
@@ -298,15 +378,10 @@ class Pinner
             $this->_loadContent('/login/');
         }
 
-        if (is_string($this->_response_content)) {
-            preg_match('/P\.main\.start\((\{.+\})\);/isU', $this->_response_content, $match);
-            if (isset($match[1]) and $match[1]) {
-                $app_json = @json_decode($match[1], true);
-                if (is_array($app_json) and isset($app_json['context']['app_version']) and $app_json['context']['app_version']) {
-                    $this->_app_version = $app_json['context']['app_version'];
-                    return $this->_app_version;
-                }
-            }
+        $app_json = $this->_responseToArray();
+        if ($app_json and isset($app_json['context']['app_version']) and $app_json['context']['app_version']) {
+            $this->_app_version = $app_json['context']['app_version'];
+            return $this->_app_version;
         }
 
         throw new PinnerException('Error getting App Version from P.main.start() JSON data.');
@@ -419,84 +494,22 @@ class Pinner
     }
 
     /**
-     * Get user's pins.
+     * Get data array from JSON response.
      *
-     * @param $board_id
-     * @return array
-     * @throws PinnerException
+     * @return array|bool
      */
-    public function getPins($board_id = null)
+    private function _responseToArray()
     {
-        $response = $this->_api_client->get('/v3/pidgets/users/' . urlencode($this->_login) . '/pins/', array(
-            'headers' => $this->_http_headers,
-            'verify' => false,
-        ));
-        if ($response->getStatusCode() === 200) {
-            $collection = $response->json();
-            if (isset($collection['data']['pins'])) {
-                if ($board_id) {
-                    $pins = array();
-                    foreach ($collection['data']['pins'] as $pin) {
-                        if ($pin['board']['id'] == $board_id) {
-                            $pins[] = $pin;
-                        }
-                    }
-                    return $pins;
-                }
-                return $collection['data']['pins'];
-            }
-            return array();
-        }
-        throw new PinnerException('Unknown error while getting pins list.');
-    }
-
-    /**
-     * Get user's boards.
-     *
-     * @return array
-     * @throws PinnerException
-     */
-    public function getBoards()
-    {
-        $pins = $this->getPins();
-        $boards = array();
-        if (isset($pins['data']['pins'])) {
-            foreach ($pins['data']['pins'] as $pin) {
-                $boards[$pin['board']['id']] = $pin['board']['name'];
-            }
-        }
-        return $boards;
-    }
-
-    /**
-     * Get logged in user data.
-     *
-     * @return mixed
-     * @throws PinnerException
-     */
-    public function getUserData()
-    {
-        if (count($this->user_data)) {
-            return $this->user_data;
-        }
-
-        $this->_postLogin();
-
-        $this->_loadContent('/me/');
 
         if (is_string($this->_response_content)) {
-            preg_match('/P\.start\.start\((\{.+\})\);/isU', $this->_response_content, $match);
+            preg_match('/P\.main\.start\((\{.+\})\);/isU', $this->_response_content, $match);
             if (isset($match[1]) and $match[1]) {
-                $app_json = @json_decode($match[1], true);
-                if (isset($app_json['resourceDataCache'][0]['data']) and is_array($app_json['resourceDataCache'][0]['data'])) {
-                    if (isset($app_json['resourceDataCache'][0]['data']['repins_from'])) {
-                        unset($app_json['resourceDataCache'][0]['data']['repins_from']);
-                    }
-                    $this->user_data = $app_json['resourceDataCache'][0]['data'];
-                    return $this->user_data;
+                $result = @json_decode($match[1], true);
+                if (is_array($result)) {
+                    return $result;
                 }
             }
         }
-        throw new PinnerException('Unknown error while getting user data.');
+        return false;
     }
 }
