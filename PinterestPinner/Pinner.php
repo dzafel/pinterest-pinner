@@ -246,25 +246,28 @@ class Pinner
      */
     public function getPins($board_id = null)
     {
-        $response = $this->_api_client->get('/v3/pidgets/users/' . urlencode($this->_login) . '/pins/', array(
-            'headers' => $this->_http_headers,
-            'verify' => false,
-        ));
-        if ($response->getStatusCode() === 200) {
-            $collection = $response->json();
-            if (isset($collection['data']['pins'])) {
-                if ($board_id) {
-                    $pins = array();
-                    foreach ($collection['data']['pins'] as $pin) {
-                        if ($pin['board']['id'] == $board_id) {
-                            $pins[] = $pin;
+        $user_data = $this->getUserData();
+        if (isset($user_data['username'])) {
+            $response = $this->_api_client->get('/v3/pidgets/users/' . urlencode($user_data['username']) . '/pins/', array(
+                'headers' => $this->_http_headers,
+                'verify' => false,
+            ));
+            if ($response->getStatusCode() === 200) {
+                $collection = $response->json();
+                if (isset($collection['data']['pins'])) {
+                    if ($board_id) {
+                        $pins = array();
+                        foreach ($collection['data']['pins'] as $pin) {
+                            if ($pin['board']['id'] == $board_id) {
+                                $pins[] = $pin;
+                            }
                         }
+                        return $pins;
                     }
-                    return $pins;
+                    return $collection['data']['pins'];
                 }
-                return $collection['data']['pins'];
+                return array();
             }
-            return array();
         }
         throw new PinnerException('Unknown error while getting pins list.');
     }
@@ -282,7 +285,7 @@ class Pinner
         if (is_array($pins)) {
             foreach ($pins as $pin) {
                 if (is_array($pin) and isset($pin['board']['id'], $pin['board']['name'])) {
-                    $boards[$pin['board']['id']] = $pin['board']['name'];
+                    $boards[(string)$pin['board']['id']] = (string)$pin['board']['name'];
                 }
             }
         }
