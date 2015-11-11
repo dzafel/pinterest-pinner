@@ -34,6 +34,11 @@ class Pinner
     public $user_data = array();
 
     /**
+     * @var array
+     */
+    public $boards = array();
+
+    /**
      * @var Pinterest account login
      */
     private $_login = null;
@@ -280,16 +285,40 @@ class Pinner
      */
     public function getBoards()
     {
-        $pins = $this->getPins();
-        $boards = array();
-        if (is_array($pins)) {
-            foreach ($pins as $pin) {
-                if (is_array($pin) and isset($pin['board']['id'], $pin['board']['name'])) {
-                    $boards[(string)$pin['board']['id']] = (string)$pin['board']['name'];
+        if (count($this->boards)) {
+            return $this->boards;
+        }
+        $user_data = $this->getUserData();
+        if (!isset($user_data['username'])) {
+            throw new PinnerException('Missing username in user data.');
+        }
+        $this->_loadContent('/resource/BoardPickerBoardsResource/get/?' . http_build_query(array(
+                'source_url' => '/' . $user_data['username'] . '/',
+                'data' => json_encode(array(
+                    'options' => array(
+                        'allow_stale' => true,
+                        'field_set_key' => 'board_picker',
+                        'filter' => 'all',
+                        'shortlist_length' => 1,
+                    ),
+                    'context' => new \stdClass,
+                )),
+                'module_path' => 'App>FooterButtons>DropdownButton>Dropdown>AddPin>ShowModalButton(module=PinUploader)'
+                    . '#Modal(showCloseModal=true, mouseDownInModal=false)',
+                '_' => time() . '999',
+            )), true);
+        $this->boards = array();
+        if (
+            isset($this->_response_content['resource_response']['data']['all_boards'])
+            and is_array($this->_response_content['resource_response']['data']['all_boards'])
+        ) {
+            foreach ($this->_response_content['resource_response']['data']['all_boards'] as $board) {
+                if (isset($board['id'], $board['name'])) {
+                    $this->boards[$board['id']] = $board['name'];
                 }
             }
         }
-        return $boards;
+        return $this->boards;
     }
 
     /**
@@ -324,30 +353,41 @@ class Pinner
      * Set cURL url and get the content from curl_exec() call.
      *
      * @param string $url
-     * @param array|null $post_data
+     * @param array|boolean|null $data_ajax If array - it will be POST request, if TRUE if will be GET, ajax request.
      * @param string $referer
      * @return string
      * @throws PinnerException
      */
-    protected function _loadContent($url, array $post_data = null, $referer = '')
+    protected function _loadContent($url, $data_ajax = null, $referer = '')
     {
-        if ($post_data) {
+        if (is_array($data_ajax)) {
+            $headers = array_merge($this->_http_headers, array(
+                'X-NEW-APP' => '1',
+                'X-APP-VERSION' => $this->_getAppVersion(),
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Accept' => 'application/json, text/javascript, */*; q=0.01',
+                'X-CSRFToken' => $this->_getCSRFToken(),
+                'Referer' => self::PINTEREST_URL . $referer,
+            ));
             $response = $this->_http_client->post($url, array(
-                'headers' => array_merge($this->_http_headers, array(
+                'headers' => $headers,
+                'verify' => false,
+                'cookies' => true,
+                'body' => $data_ajax,
+            ));
+        } else {
+            $headers = $this->_http_headers;
+            if ($data_ajax === true) {
+                $headers = array_merge($headers, array(
                     'X-NEW-APP' => '1',
                     'X-APP-VERSION' => $this->_getAppVersion(),
                     'X-Requested-With' => 'XMLHttpRequest',
                     'Accept' => 'application/json, text/javascript, */*; q=0.01',
-                    'X-CSRFToken' => $this->_getCSRFToken(),
-                    'Referer' => self::PINTEREST_URL . $referer,
-                )),
-                'verify' => false,
-                'cookies' => true,
-                'body' => $post_data,
-            ));
-        } else {
+                    'X-Pinterest-AppState' => 'active',
+                ));
+            }
             $response = $this->_http_client->get($url, array(
-                'headers' => $this->_http_headers,
+                'headers' => $headers,
                 'verify' => false,
                 'cookies' => true,
             ));

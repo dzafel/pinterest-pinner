@@ -1,6 +1,6 @@
 {
     "name": "dzafel/pinterest-pinner",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "description": "Post to pinterest programatically",
     "keywords": ["pinterest"],
     "license": "GPL-2.0",
