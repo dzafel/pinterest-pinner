@@ -60,7 +60,7 @@ $user = $pinterest->getUserData();
 
 ### 2.0.3 (2015-11-11)
 
-- FIX: new `getBoards()` logic, now it returns all boards instead of just first 50 ([#15](/../../issues/16))
+- FIX: new `getBoards()` logic, now it returns all boards instead of just first 50 ([#16](/../../issues/16))
 
 ### 2.0.2 (2015-10-05)
 
