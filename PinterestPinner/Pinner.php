@@ -235,7 +235,9 @@ class Pinner
         $this->_postLogin();
         $this->_postPin();
 
-        $this->_pin_id = isset($this->_response_content['resource_response']['data']['id']) ? $this->_response_content['resource_response']['data']['id'] : null;
+        $this->_pin_id = isset($this->_response_content['resource_response']['data']['id'])
+            ? $this->_response_content['resource_response']['data']['id']
+            : null;
 
         $this->_response_content = null;
 
@@ -253,10 +255,13 @@ class Pinner
     {
         $user_data = $this->getUserData();
         if (isset($user_data['username'])) {
-            $response = $this->_api_client->get('/v3/pidgets/users/' . urlencode($user_data['username']) . '/pins/', array(
-                'headers' => $this->_http_headers,
-                'verify' => false,
-            ));
+            $response = $this->_api_client->get(
+                '/v3/pidgets/users/' . urlencode($user_data['username']) . '/pins/',
+                array(
+                    'headers' => $this->_http_headers,
+                    'verify' => false,
+                )
+            );
             if ($response->getStatusCode() === 200) {
                 $collection = $response->json();
                 if (isset($collection['data']['pins'])) {
@@ -338,7 +343,11 @@ class Pinner
         $this->_loadContent('/me/');
 
         $app_json = $this->_responseToArray();
-        if ($app_json and isset($app_json['resourceDataCache'][0]['data']) and is_array($app_json['resourceDataCache'][0]['data'])) {
+        if (
+            $app_json
+            and isset($app_json['resourceDataCache'][0]['data'])
+            and is_array($app_json['resourceDataCache'][0]['data'])
+        ) {
             if (isset($app_json['resourceDataCache'][0]['data']['repins_from'])) {
                 unset($app_json['resourceDataCache'][0]['data']['repins_from']);
             }
@@ -393,16 +402,18 @@ class Pinner
             ));
         }
 
-        $code = (int) substr($response->getStatusCode(), 0, 2);
+        $code = (int)substr($response->getStatusCode(), 0, 2);
         if ($code !== 20) {
-            throw new PinnerException('HTTP error (' . $url . '): ' . $response->getStatusCode() . ' ' . $response->getReasonPhrase());
+            throw new PinnerException(
+                'HTTP error (' . $url . '): ' . $response->getStatusCode() . ' ' . $response->getReasonPhrase()
+            );
         }
 
-        $this->_response_content = (string) $response->getBody();
+        $this->_response_content = (string)$response->getBody();
         if (substr($this->_response_content, 0, 1) === '{') {
             $this->_response_content = @json_decode($this->_response_content, true);
         }
-        $this->_response_headers = (array) $response->getHeaders();
+        $this->_response_headers = (array)$response->getHeaders();
     }
 
     /**
@@ -451,7 +462,7 @@ class Pinner
             if (is_array($this->_response_headers['Set-Cookie'])) {
                 $content = implode(' ', $this->_response_headers['Set-Cookie']);
             } else {
-                $content = (string) $this->_response_headers['Set-Cookie'];
+                $content = (string)$this->_response_headers['Set-Cookie'];
             }
             preg_match('/csrftoken=(.*)[\b;\s]/isU', $content, $match);
             if (isset($match[1]) and $match[1]) {
@@ -483,7 +494,8 @@ class Pinner
                 'context' => new \stdClass,
             )),
             'source_url' => '/login/',
-            'module_path' => 'App()>LoginPage()>Login()>Button(class_name=primary, text=Log In, type=submit, size=large)',
+            'module_path' => 'App()>LoginPage()>Login()>Button(class_name=primary, '
+                . 'text=Log In, type=submit, size=large)',
         );
         $this->_loadContent('/resource/UserSessionResource/create/', $post_data, '/login/');
 
@@ -493,12 +505,16 @@ class Pinner
 
         $this->is_logged_in = true;
 
-        if (isset($this->_response_content['resource_response']['error']) and $this->_response_content['resource_response']['error']) {
+        if (
+            isset($this->_response_content['resource_response']['error'])
+            and $this->_response_content['resource_response']['error']
+        ) {
             throw new PinnerException($this->_response_content['resource_response']['error']);
-        } else {
-            if (!isset($this->_response_content['resource_response']['data']) or !$this->_response_content['resource_response']['data']) {
-                throw new PinnerException('Unknown error while logging in.');
-            }
+        } elseif (
+            !isset($this->_response_content['resource_response']['data'])
+            or !$this->_response_content['resource_response']['data']
+        ) {
+            throw new PinnerException('Unknown error while logging in.');
         }
     }
 
@@ -522,17 +538,23 @@ class Pinner
                 'context' => new \stdClass,
             )),
             'source_url' => '/',
-            'module_path' => 'App()>ImagesFeedPage(resource=FindPinImagesResource(url=' . $this->_link . '))>Grid()>GridItems()>Pinnable(url=' . $this->_image . ', type=pinnable, link=' . $this->_link . ')#Modal(module=PinCreate())',
+            'module_path' => 'App()>ImagesFeedPage(resource=FindPinImagesResource(url='
+                . $this->_link . '))>Grid()>GridItems()>Pinnable(url=' . $this->_image
+                . ', type=pinnable, link=' . $this->_link . ')#Modal(module=PinCreate())',
         );
 
         $this->_loadContent('/resource/PinResource/create/', $post_data, '/');
 
-        if (isset($this->_response_content['resource_response']['error']) and $this->_response_content['resource_response']['error']) {
+        if (
+            isset($this->_response_content['resource_response']['error'])
+            and $this->_response_content['resource_response']['error']
+        ) {
             throw new PinnerException($this->_response_content['resource_response']['error']);
-        } else {
-            if (!isset($this->_response_content['resource_response']['data']['id']) or !$this->_response_content['resource_response']['data']['id']) {
-                throw new PinnerException('Unknown error while creating a pin.');
-            }
+        } elseif (
+            !isset($this->_response_content['resource_response']['data']['id'])
+            or !$this->_response_content['resource_response']['data']['id']
+        ) {
+            throw new PinnerException('Unknown error while creating a pin.');
         }
     }
 
