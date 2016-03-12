@@ -438,7 +438,7 @@ class Pinner
             return $this->_app_version;
         }
 
-        throw new PinnerException('Error getting App Version from P.main.start() JSON data.');
+        throw new PinnerException('Error getting App Version from "jsInit1" JSON data.');
     }
 
     /**
@@ -567,7 +567,7 @@ class Pinner
     {
 
         if (is_string($this->_response_content)) {
-            preg_match('/P\.main\.start\((\{.+\})\);/isU', $this->_response_content, $match);
+            preg_match('/<script\s*type="application\/json"\s+id=\'jsInit1\'>\s*(\{.+\})\s*<\/script>/isU', $this->_response_content, $match);
             if (isset($match[1]) and $match[1]) {
                 $result = @json_decode($match[1], true);
                 if (is_array($result)) {
