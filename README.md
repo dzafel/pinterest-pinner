@@ -58,6 +58,10 @@ $user = $pinterest->getUserData();
 
 ## Version history
 
+### 2.0.4 (2016-03-12)
+
+- FIX: `_responseToArray()` now search for config JSON in `<script id="jsInit1">` instead of `P.main.start()` function ([#17](/../../issues/17))
+
 ### 2.0.3 (2015-11-11)
 
 - FIX: new `getBoards()` logic, now it returns all boards instead of just first 50 ([#16](/../../issues/16))
