@@ -1,7 +1,8 @@
 <?php
 namespace PinterestPinner;
 
-use \GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Client as GuzzleClient;
+use stdClass;
 
 /**
  * Programmatically create a Pinterest's pin.
@@ -12,7 +13,6 @@ use \GuzzleHttp\Client as GuzzleClient;
  */
 class Pinner
 {
-
     /**
      * Pinterest.com base URL
      */
@@ -24,14 +24,14 @@ class Pinner
     const PINTEREST_API_URL = 'https://api.pinterest.com';
 
     /**
-     * @var bool
+     * @var boolean
      */
-    public $is_logged_in = false;
+    public $isLoggedIn = false;
 
     /**
      * @var array
      */
-    public $user_data = array();
+    public $userData = array();
 
     /**
      * @var array
@@ -39,59 +39,54 @@ class Pinner
     public $boards = array();
 
     /**
-     * @var Pinterest account login
+     * @var string Pinterest account login
      */
     private $_login = null;
 
     /**
-     * @var Pinterest account password
+     * @var string Pinterest account password
      */
     private $_password = null;
 
     /**
-     * @var Board ID where the pin should be added to
+     * @var string Board ID where the pin should be added to
      */
-    private $_board_id = null;
+    private $_boardId = null;
 
     /**
-     * @var If true pinterest.com will automatically share new pin on connected facebook account
+     * @var boolean If true pinterest.com will automatically share new pin on connected facebook account
      */
-    private $_share_facebook = false;
+    private $_shareFacebook = false;
 
     /**
-     * @var Newly created pin ID
+     * @var string Newly created pin ID
      */
-    private $_pin_id = null;
+    private $_pinId = null;
 
     /**
-     * @var Pinterest App version loaded from pinterest.com
+     * @var string Pinterest App version loaded from pinterest.com
      */
-    private $_app_version = null;
+    private $_appVersion = null;
 
     /**
-     * @var CSRF token loaded from pinterest.com
+     * @var string CSRF token loaded from pinterest.com
      */
-    private $_csrftoken = null;
+    private $_csrfToken = null;
 
     /**
-     * @var Default requests headers
+     * @var array Default requests headers
      */
-    private $_http_headers = array();
-
-    /**
-     * @var \GuzzleHttp\Client
-     */
-    private $_http_client = null;
+    private $_httpHeaders = array();
 
     /**
      * @var \GuzzleHttp\Client
      */
-    private $_api_client = null;
+    private $_httpClient = null;
 
     /**
-     * @var Pinterest page loaded content
+     * @var string Pinterest page loaded content
      */
-    protected $_response_content = null;
+    protected $_responseContent = null;
 
     /*
      * Initialize Guzzle Client and set default variables.
@@ -99,33 +94,20 @@ class Pinner
     public function __construct()
     {
         // Default HTTP headers for requests
-        $this->_http_headers = array(
+        $this->_httpHeaders = array(
             'Connection' => 'keep-alive',
             'Pragma' => 'no-cache',
             'Cache-Control' => 'no-cache',
             'Accept-Language' => 'en-US,en;q=0.5',
             'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML => like Gecko) Iron/31.0.1700.0 Chrome/31.0.1700.0',
         );
-        // Initialize Guzzle Clients
-        $this->_http_client = new GuzzleClient(array(
-            'base_url' => self::PINTEREST_URL,
-            'defaults' => array(
-                'headers' => $this->_http_headers,
-            ),
-        ));
-        $this->_api_client = new GuzzleClient(array(
-            'base_url' => self::PINTEREST_API_URL,
-            'defaults' => array(
-                'headers' => $this->_http_headers,
-            ),
-        ));
     }
 
     /**
      * Set Pinterest account login.
      *
      * @param string $login
-     * @return PinterestPinner\Pinner
+     * @return \PinterestPinner\Pinner
      */
     public function setLogin($login)
     {
@@ -138,7 +120,7 @@ class Pinner
      * Set Pinterest account password.
      *
      * @param string $password
-     * @return PinterestPinner\Pinner
+     * @return \PinterestPinner\Pinner
      */
     public function setPassword($password)
     {
@@ -150,12 +132,12 @@ class Pinner
     /**
      * Set Pinterest board ID to add pin to.
      *
-     * @param string $board_id
-     * @return PinterestPinner\Pinner
+     * @param string $boardId
+     * @return \PinterestPinner\Pinner
      */
-    public function setBoardID($board_id)
+    public function setBoardID($boardId)
     {
-        $this->_board_id = $board_id;
+        $this->_boardId = $boardId;
 
         return $this;
     }
@@ -164,7 +146,7 @@ class Pinner
      * Set pin image URL.
      *
      * @param string $image
-     * @return PinterestPinner\Pinner
+     * @return \PinterestPinner\Pinner
      */
     public function setImage($image)
     {
@@ -177,7 +159,7 @@ class Pinner
      * Set pin description.
      *
      * @param string $description
-     * @return PinterestPinner\Pinner
+     * @return \PinterestPinner\Pinner
      */
     public function setDescription($description)
     {
@@ -190,7 +172,7 @@ class Pinner
      * Set pin link.
      *
      * @param string $link
-     * @return PinterestPinner\Pinner
+     * @return \PinterestPinner\Pinner
      */
     public function setLink($link)
     {
@@ -203,11 +185,11 @@ class Pinner
      * Set 'Share on Facebook' option.
      *
      * @param boolean $share
-     * @return PinterestPinner\Pinner
+     * @return \PinterestPinner\Pinner
      */
     public function setShareFacebook($share)
     {
-        $this->_share_facebook = (bool)$share;
+        $this->_shareFacebook = (bool)$share;
 
         return $this;
     }
@@ -219,7 +201,7 @@ class Pinner
      */
     public function getPinID()
     {
-        return $this->_pin_id ? $this->_pin_id : false;
+        return $this->_pinId ?: false;
     }
 
     /**
@@ -230,16 +212,16 @@ class Pinner
     public function pin()
     {
         // Reset the pin ID
-        $this->_pin_id = null;
+        $this->_pinId = null;
 
         $this->_postLogin();
         $this->_postPin();
 
-        $this->_pin_id = isset($this->_response_content['resource_response']['data']['id'])
-            ? $this->_response_content['resource_response']['data']['id']
+        $this->_pinId = (is_array($this->_responseContent) and isset($this->_responseContent['resource_response']['data']['id']))
+            ? $this->_responseContent['resource_response']['data']['id']
             : null;
 
-        $this->_response_content = null;
+        $this->_responseContent = null;
 
         return $this->getPinID();
     }
@@ -247,28 +229,25 @@ class Pinner
     /**
      * Get user's pins.
      *
-     * @param $board_id
+     * @param $boardId
      * @return array
-     * @throws PinnerException
+     * @throws \PinterestPinner\PinnerException
      */
-    public function getPins($board_id = null)
+    public function getPins($boardId = null)
     {
-        $user_data = $this->getUserData();
-        if (isset($user_data['username'])) {
-            $response = $this->_api_client->get(
-                '/v3/pidgets/users/' . urlencode($user_data['username']) . '/pins/',
-                array(
-                    'headers' => $this->_http_headers,
-                    'verify' => false,
-                )
+        $userData = $this->getUserData();
+        if (isset($userData['username'])) {
+            $response = $this->_guzzleRequest(
+                'API',
+                '/v3/pidgets/users/' . urlencode($userData['username']) . '/pins/'
             );
             if ($response->getStatusCode() === 200) {
                 $collection = $response->json();
                 if (isset($collection['data']['pins'])) {
-                    if ($board_id) {
+                    if ($boardId) {
                         $pins = array();
                         foreach ($collection['data']['pins'] as $pin) {
-                            if ($pin['board']['id'] == $board_id) {
+                            if ($pin['board']['id'] == $boardId) {
                                 $pins[] = $pin;
                             }
                         }
@@ -286,19 +265,19 @@ class Pinner
      * Get user's boards.
      *
      * @return array
-     * @throws PinnerException
+     * @throws \PinterestPinner\PinnerException
      */
     public function getBoards()
     {
         if (count($this->boards)) {
             return $this->boards;
         }
-        $user_data = $this->getUserData();
-        if (!isset($user_data['username'])) {
+        $userData = $this->getUserData();
+        if (!isset($userData['username'])) {
             throw new PinnerException('Missing username in user data.');
         }
         $this->_loadContent('/resource/BoardPickerBoardsResource/get/?' . http_build_query(array(
-                'source_url' => '/' . $user_data['username'] . '/',
+                'source_url' => '/' . $userData['username'] . '/',
                 'data' => json_encode(array(
                     'options' => array(
                         'allow_stale' => true,
@@ -306,7 +285,7 @@ class Pinner
                         'filter' => 'all',
                         'shortlist_length' => 1,
                     ),
-                    'context' => new \stdClass,
+                    'context' => new stdClass,
                 )),
                 'module_path' => 'App>FooterButtons>DropdownButton>Dropdown>AddPin>ShowModalButton(module=PinUploader)'
                     . '#Modal(showCloseModal=true, mouseDownInModal=false)',
@@ -314,10 +293,10 @@ class Pinner
             )), true);
         $this->boards = array();
         if (
-            isset($this->_response_content['resource_response']['data']['all_boards'])
-            and is_array($this->_response_content['resource_response']['data']['all_boards'])
+            isset($this->_responseContent['resource_response']['data']['all_boards'])
+            and is_array($this->_responseContent['resource_response']['data']['all_boards'])
         ) {
-            foreach ($this->_response_content['resource_response']['data']['all_boards'] as $board) {
+            foreach ($this->_responseContent['resource_response']['data']['all_boards'] as $board) {
                 if (isset($board['id'], $board['name'])) {
                     $this->boards[$board['id']] = $board['name'];
                 }
@@ -330,29 +309,29 @@ class Pinner
      * Get logged in user data.
      *
      * @return mixed
-     * @throws PinnerException
+     * @throws \PinterestPinner\PinnerException
      */
     public function getUserData()
     {
-        if (count($this->user_data)) {
-            return $this->user_data;
+        if (count($this->userData)) {
+            return $this->userData;
         }
 
         $this->_postLogin();
 
         $this->_loadContent('/me/');
 
-        $app_json = $this->_responseToArray();
+        $appJson = $this->_responseToArray();
         if (
-            $app_json
-            and isset($app_json['resourceDataCache'][0]['data'])
-            and is_array($app_json['resourceDataCache'][0]['data'])
+            $appJson
+            and isset($appJson['resourceDataCache'][0]['data'])
+            and is_array($appJson['resourceDataCache'][0]['data'])
         ) {
-            if (isset($app_json['resourceDataCache'][0]['data']['repins_from'])) {
-                unset($app_json['resourceDataCache'][0]['data']['repins_from']);
+            if (isset($appJson['resourceDataCache'][0]['data']['repins_from'])) {
+                unset($appJson['resourceDataCache'][0]['data']['repins_from']);
             }
-            $this->user_data = $app_json['resourceDataCache'][0]['data'];
-            return $this->user_data;
+            $this->userData = $appJson['resourceDataCache'][0]['data'];
+            return $this->userData;
         }
 
         throw new PinnerException('Unknown error while getting user data.');
@@ -362,15 +341,15 @@ class Pinner
      * Set cURL url and get the content from curl_exec() call.
      *
      * @param string $url
-     * @param array|boolean|null $data_ajax If array - it will be POST request, if TRUE if will be GET, ajax request.
+     * @param array|boolean|null $dataAjax If array - it will be POST request, if TRUE if will be GET, ajax request.
      * @param string $referer
      * @return string
-     * @throws PinnerException
+     * @throws \PinterestPinner\PinnerException
      */
-    protected function _loadContent($url, $data_ajax = null, $referer = '')
+    protected function _loadContent($url, $dataAjax = null, $referer = '')
     {
-        if (is_array($data_ajax)) {
-            $headers = array_merge($this->_http_headers, array(
+        if (is_array($dataAjax)) {
+            $headers = array_merge($this->_httpHeaders, array(
                 'X-NEW-APP' => '1',
                 'X-APP-VERSION' => $this->_getAppVersion(),
                 'X-Requested-With' => 'XMLHttpRequest',
@@ -378,15 +357,10 @@ class Pinner
                 'X-CSRFToken' => $this->_getCSRFToken(),
                 'Referer' => self::PINTEREST_URL . $referer,
             ));
-            $response = $this->_http_client->post($url, array(
-                'headers' => $headers,
-                'verify' => false,
-                'cookies' => true,
-                'body' => $data_ajax,
-            ));
+            $response = $this->_guzzleRequest('POST', $url, $dataAjax, $headers);
         } else {
-            $headers = $this->_http_headers;
-            if ($data_ajax === true) {
+            $headers = $this->_httpHeaders;
+            if ($dataAjax === true) {
                 $headers = array_merge($headers, array(
                     'X-NEW-APP' => '1',
                     'X-APP-VERSION' => $this->_getAppVersion(),
@@ -395,11 +369,7 @@ class Pinner
                     'X-Pinterest-AppState' => 'active',
                 ));
             }
-            $response = $this->_http_client->get($url, array(
-                'headers' => $headers,
-                'verify' => false,
-                'cookies' => true,
-            ));
+            $response = $this->_guzzleRequest('GET', $url, null, $headers);
         }
 
         $code = (int)substr($response->getStatusCode(), 0, 2);
@@ -409,33 +379,33 @@ class Pinner
             );
         }
 
-        $this->_response_content = (string)$response->getBody();
-        if (substr($this->_response_content, 0, 1) === '{') {
-            $this->_response_content = @json_decode($this->_response_content, true);
+        $this->_responseContent = (string)$response->getBody();
+        if (substr($this->_responseContent, 0, 1) === '{') {
+            $this->_responseContent = @json_decode($this->_responseContent, true);
         }
-        $this->_response_headers = (array)$response->getHeaders();
+        $this->_responseHeaders = (array)$response->getHeaders();
     }
 
     /**
      * Get Pinterest App Version.
      *
      * @return string
-     * @throws PinnerException
+     * @throws \PinterestPinner\PinnerException
      */
     private function _getAppVersion()
     {
-        if ($this->_app_version) {
-            return $this->_app_version;
+        if ($this->_appVersion) {
+            return $this->_appVersion;
         }
 
-        if (!$this->_response_content) {
+        if (!$this->_responseContent) {
             $this->_loadContent('/login/');
         }
 
-        $app_json = $this->_responseToArray();
-        if ($app_json and isset($app_json['context']['app_version']) and $app_json['context']['app_version']) {
-            $this->_app_version = $app_json['context']['app_version'];
-            return $this->_app_version;
+        $appJson = $this->_responseToArray();
+        if ($appJson and isset($appJson['context']['app_version']) and $appJson['context']['app_version']) {
+            $this->_appVersion = $appJson['context']['app_version'];
+            return $this->_appVersion;
         }
 
         throw new PinnerException('Error getting App Version from "jsInit1" JSON data.');
@@ -446,28 +416,28 @@ class Pinner
      *
      * @param string $url
      * @return string
-     * @throws PinnerException
+     * @throws \PinterestPinner\PinnerException
      */
     private function _getCSRFToken($url = '/login/')
     {
-        if ($this->_csrftoken) {
-            return $this->_csrftoken;
+        if ($this->_csrfToken) {
+            return $this->_csrfToken;
         }
 
-        if (!$this->_response_content) {
+        if (!$this->_responseContent) {
             $this->_loadContent($url);
         }
 
-        if (isset($this->_response_headers['Set-Cookie'])) {
-            if (is_array($this->_response_headers['Set-Cookie'])) {
-                $content = implode(' ', $this->_response_headers['Set-Cookie']);
+        if (isset($this->_responseHeaders['Set-Cookie'])) {
+            if (is_array($this->_responseHeaders['Set-Cookie'])) {
+                $content = implode(' ', $this->_responseHeaders['Set-Cookie']);
             } else {
-                $content = (string)$this->_response_headers['Set-Cookie'];
+                $content = (string)$this->_responseHeaders['Set-Cookie'];
             }
             preg_match('/csrftoken=(.*)[\b;\s]/isU', $content, $match);
             if (isset($match[1]) and $match[1]) {
-                $this->_csrftoken = $match[1];
-                return $this->_csrftoken;
+                $this->_csrfToken = $match[1];
+                return $this->_csrfToken;
             }
         }
 
@@ -477,42 +447,42 @@ class Pinner
     /**
      * Try to log in to Pinterest.
      *
-     * @throws PinnerException
+     * @throws \PinterestPinner\PinnerException
      */
     private function _postLogin()
     {
-        if ($this->is_logged_in) {
+        if ($this->isLoggedIn) {
             return;
         }
 
-        $post_data = array(
+        $postData = array(
             'data' => json_encode(array(
                 'options' => array(
                     'username_or_email' => $this->_login,
                     'password' => $this->_password,
                 ),
-                'context' => new \stdClass,
+                'context' => new stdClass,
             )),
             'source_url' => '/login/',
             'module_path' => 'App()>LoginPage()>Login()>Button(class_name=primary, '
                 . 'text=Log In, type=submit, size=large)',
         );
-        $this->_loadContent('/resource/UserSessionResource/create/', $post_data, '/login/');
+        $this->_loadContent('/resource/UserSessionResource/create/', $postData, '/login/');
 
         // Force reload CSRF token, it's different for logged in user
-        $this->_csrftoken = null;
+        $this->_csrfToken = null;
         $this->_getCSRFToken('/');
 
-        $this->is_logged_in = true;
+        $this->isLoggedIn = true;
 
         if (
-            isset($this->_response_content['resource_response']['error'])
-            and $this->_response_content['resource_response']['error']
+            isset($this->_responseContent['resource_response']['error'])
+            and $this->_responseContent['resource_response']['error']
         ) {
-            throw new PinnerException($this->_response_content['resource_response']['error']);
+            throw new PinnerException($this->_responseContent['resource_response']['error']);
         } elseif (
-            !isset($this->_response_content['resource_response']['data'])
-            or !$this->_response_content['resource_response']['data']
+            !isset($this->_responseContent['resource_response']['data'])
+            or !$this->_responseContent['resource_response']['data']
         ) {
             throw new PinnerException('Unknown error while logging in.');
         }
@@ -521,21 +491,21 @@ class Pinner
     /**
      * Try to create a new pin.
      *
-     * @throws PinnerException
+     * @throws \PinterestPinner\PinnerException
      */
     private function _postPin()
     {
-        $post_data = array(
+        $postData = array(
             'data' => json_encode(array(
                 'options' => array(
-                    'board_id' => $this->_board_id,
+                    'board_id' => $this->_boardId,
                     'description' => $this->_description,
                     'link' => $this->_link,
-                    'share_facebook' => $this->_share_facebook,
+                    'share_facebook' => $this->_shareFacebook,
                     'image_url' => $this->_image,
                     'method' => 'scraped',
                 ),
-                'context' => new \stdClass,
+                'context' => new stdClass,
             )),
             'source_url' => '/',
             'module_path' => 'App()>ImagesFeedPage(resource=FindPinImagesResource(url='
@@ -543,16 +513,16 @@ class Pinner
                 . ', type=pinnable, link=' . $this->_link . ')#Modal(module=PinCreate())',
         );
 
-        $this->_loadContent('/resource/PinResource/create/', $post_data, '/');
+        $this->_loadContent('/resource/PinResource/create/', $postData, '/');
 
         if (
-            isset($this->_response_content['resource_response']['error'])
-            and $this->_response_content['resource_response']['error']
+            isset($this->_responseContent['resource_response']['error'])
+            and $this->_responseContent['resource_response']['error']
         ) {
-            throw new PinnerException($this->_response_content['resource_response']['error']);
+            throw new PinnerException($this->_responseContent['resource_response']['error']);
         } elseif (
-            !isset($this->_response_content['resource_response']['data']['id'])
-            or !$this->_response_content['resource_response']['data']['id']
+            !isset($this->_responseContent['resource_response']['data']['id'])
+            or !$this->_responseContent['resource_response']['data']['id']
         ) {
             throw new PinnerException('Unknown error while creating a pin.');
         }
@@ -565,9 +535,12 @@ class Pinner
      */
     private function _responseToArray()
     {
-
-        if (is_string($this->_response_content)) {
-            preg_match('/<script\s*type="application\/json"\s+id=\'jsInit1\'>\s*(\{.+\})\s*<\/script>/isU', $this->_response_content, $match);
+        if (is_string($this->_responseContent)) {
+            preg_match(
+                '/<script\s*type="application\/json"\s+id=\'jsInit1\'>\s*(\{.+\})\s*<\/script>/isU',
+                $this->_responseContent,
+                $match
+            );
             if (isset($match[1]) and $match[1]) {
                 $result = @json_decode($match[1], true);
                 if (is_array($result)) {
@@ -576,5 +549,74 @@ class Pinner
             }
         }
         return false;
+    }
+
+    /**
+     * Make a HTTP request to Pinterest.
+     *
+     * @param string $type
+     * @param string $urlPath
+     * @param null|array $data
+     * @param array $headers
+     * @return \Psr\Http\Message\ResponseInterface
+     */
+    private function _guzzleRequest($type = 'GET', $urlPath, $data = null, $headers = array())
+    {
+        if (!$this->_httpClient) {
+            if (version_compare(GuzzleClient::VERSION, '6.0.0', '>=')) {
+                $config = array(
+                    'headers' => $this->_httpHeaders,
+                    'cookies' => true,
+                    'verify' => false,
+                );
+            } else {
+                $config = array(
+                    'defaults' => array(
+                        'headers' => $this->_httpHeaders,
+                    ),
+                );
+            }
+            $this->_httpClient = new GuzzleClient($config);
+        }
+
+        $url = self::PINTEREST_URL . $urlPath;
+        if ($type === 'API') {
+            $url = self::PINTEREST_API_URL . $urlPath;
+            $type = 'GET';
+        }
+
+        if (empty($headers)) {
+            $headers = $this->_httpHeaders;
+        }
+
+        if ($type === 'POST') {
+            if (version_compare(GuzzleClient::VERSION, '6.0.0', '>=')) {
+                $response = $this->_httpClient->request('POST', $url, array(
+                    'form_params' => $data,
+                    'headers' => $headers,
+                ));
+            } else {
+                $response = $this->_httpClient->post($url, array(
+                    'headers' => $headers,
+                    'verify' => false,
+                    'cookies' => true,
+                    'body' => $data,
+                ));
+            }
+        } else {
+            if (version_compare(GuzzleClient::VERSION, '6.0.0', '>=')) {
+                $response = $this->_httpClient->request('GET', $url, array(
+                    'headers' => $headers,
+                ));
+            } else {
+                $response = $this->_httpClient->get($url, array(
+                    'headers' => $headers,
+                    'verify' => false,
+                    'cookies' => true,
+                ));
+            }
+        }
+
+        return $response;
     }
 }

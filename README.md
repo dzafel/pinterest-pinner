@@ -58,6 +58,10 @@ $user = $pinterest->getUserData();
 
 ## Version history
 
+### 2.0.5 (2016-06-11)
+
+- Added Guzzle 6 support (required: `>=5.0`)
+
 ### 2.0.4 (2016-03-12)
 
 - FIX: `_responseToArray()` now search for config JSON in `<script id="jsInit1">` instead of `P.main.start()` function ([#17](/../../issues/17))
