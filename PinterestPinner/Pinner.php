@@ -324,13 +324,9 @@ class Pinner
         $appJson = $this->_responseToArray();
         if (
             $appJson
-            and isset($appJson['resourceDataCache'][0]['data'])
-            and is_array($appJson['resourceDataCache'][0]['data'])
+            and isset($appJson['tree']['data'], $appJson['tree']['data']['username'])
         ) {
-            if (isset($appJson['resourceDataCache'][0]['data']['repins_from'])) {
-                unset($appJson['resourceDataCache'][0]['data']['repins_from']);
-            }
-            $this->userData = $appJson['resourceDataCache'][0]['data'];
+            $this->userData = $appJson['tree']['data'];
             return $this->userData;
         }
 
