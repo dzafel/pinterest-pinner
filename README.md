@@ -56,7 +56,11 @@ $pins = $pinterest->getPins();
 $user = $pinterest->getUserData();
 ```
 
-## Version history
+## Changelog
+
+### 2.0.6 (2016-09-21)
+
+- FIX: `getUserData()` should load the user details from `tree > data` array path instead of `resourceDataCache` ([#21](/../../issues/21))
 
 ### 2.0.5 (2016-06-11)
 
