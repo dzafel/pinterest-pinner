@@ -58,6 +58,10 @@ $user = $pinterest->getUserData();
 
 ## Changelog
 
+### 2.0.7 (2016-09-22)
+
+- FIX: `composer.json` version fix
+
 ### 2.0.6 (2016-09-21)
 
 - FIX: `getUserData()` should load the user details from `tree > data` array path instead of `resourceDataCache` ([#21](/../../issues/21))
