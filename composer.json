@@ -1,6 +1,6 @@
 {
     "name": "dzafel/pinterest-pinner",
-    "version": "2.0.5",
+    "version": "2.0.6",
     "description": "Programmatically create a pin on Pinterest",
     "keywords": ["pinterest"],
     "license": "GPL-2.0",
