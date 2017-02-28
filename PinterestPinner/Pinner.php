@@ -1,7 +1,6 @@
 <?php
 namespace PinterestPinner;
 
-use GuzzleHttp\Client as GuzzleClient;
 use stdClass;
 
 /**
@@ -11,7 +10,8 @@ use stdClass;
  * @see     https://github.com/dzafel/pinterest-pinner
  * @license GPLv2
  */
-class Pinner
+
+abstract class Pinner
 {
     /**
      * Pinterest.com base URL
@@ -41,47 +41,47 @@ class Pinner
     /**
      * @var string Pinterest account login
      */
-    private $_login = null;
+    protected $_login = null;
 
     /**
      * @var string Pinterest account password
      */
-    private $_password = null;
+    protected $_password = null;
 
     /**
      * @var string Board ID where the pin should be added to
      */
-    private $_boardId = null;
+    protected $_boardId = null;
 
     /**
      * @var boolean If true pinterest.com will automatically share new pin on connected facebook account
      */
-    private $_shareFacebook = false;
+    protected $_shareFacebook = false;
 
     /**
      * @var string Newly created pin ID
      */
-    private $_pinId = null;
+    protected $_pinId = null;
 
     /**
      * @var string Pinterest App version loaded from pinterest.com
      */
-    private $_appVersion = null;
+    protected $_appVersion = null;
 
     /**
      * @var string CSRF token loaded from pinterest.com
      */
-    private $_csrfToken = null;
+    protected $_csrfToken = null;
 
     /**
      * @var array Default requests headers
      */
-    private $_httpHeaders = array();
+    protected $_httpHeaders = array();
 
     /**
      * @var \GuzzleHttp\Client
      */
-    private $_httpClient = null;
+    protected $_httpClient = null;
 
     /**
      * @var string Pinterest page loaded content
@@ -89,7 +89,7 @@ class Pinner
     protected $_responseContent = null;
 
     /*
-     * Initialize Guzzle Client and set default variables.
+     * Initialize HTTP Client and set default variables.
      */
     public function __construct()
     {
@@ -237,7 +237,7 @@ class Pinner
     {
         $userData = $this->getUserData();
         if (isset($userData['username'])) {
-            $response = $this->_guzzleRequest(
+            $response = $this->_httpRequest(
                 'API',
                 '/v3/pidgets/users/' . urlencode($userData['username']) . '/pins/'
             );
@@ -276,7 +276,7 @@ class Pinner
         if (!isset($userData['username'])) {
             throw new PinnerException('Missing username in user data.');
         }
-        $this->_loadContent('/resource/BoardPickerBoardsResource/get/?' . http_build_query(array(
+        $this->_loadContentAjax('/resource/BoardPickerBoardsResource/get/?' . http_build_query(array(
                 'source_url' => '/' . $userData['username'] . '/',
                 'data' => json_encode(array(
                     'options' => array(
@@ -334,61 +334,12 @@ class Pinner
     }
 
     /**
-     * Set cURL url and get the content from curl_exec() call.
-     *
-     * @param string $url
-     * @param array|boolean|null $dataAjax If array - it will be POST request, if TRUE if will be GET, ajax request.
-     * @param string $referer
-     * @return string
-     * @throws \PinterestPinner\PinnerException
-     */
-    protected function _loadContent($url, $dataAjax = null, $referer = '')
-    {
-        if (is_array($dataAjax)) {
-            $headers = array_merge($this->_httpHeaders, array(
-                'X-NEW-APP' => '1',
-                'X-APP-VERSION' => $this->_getAppVersion(),
-                'X-Requested-With' => 'XMLHttpRequest',
-                'Accept' => 'application/json, text/javascript, */*; q=0.01',
-                'X-CSRFToken' => $this->_getCSRFToken(),
-                'Referer' => self::PINTEREST_URL . $referer,
-            ));
-            $response = $this->_guzzleRequest('POST', $url, $dataAjax, $headers);
-        } else {
-            $headers = $this->_httpHeaders;
-            if ($dataAjax === true) {
-                $headers = array_merge($headers, array(
-                    'X-NEW-APP' => '1',
-                    'X-APP-VERSION' => $this->_getAppVersion(),
-                    'X-Requested-With' => 'XMLHttpRequest',
-                    'Accept' => 'application/json, text/javascript, */*; q=0.01',
-                    'X-Pinterest-AppState' => 'active',
-                ));
-            }
-            $response = $this->_guzzleRequest('GET', $url, null, $headers);
-        }
-
-        $code = (int)substr($response->getStatusCode(), 0, 2);
-        if ($code !== 20) {
-            throw new PinnerException(
-                'HTTP error (' . $url . '): ' . $response->getStatusCode() . ' ' . $response->getReasonPhrase()
-            );
-        }
-
-        $this->_responseContent = (string)$response->getBody();
-        if (substr($this->_responseContent, 0, 1) === '{') {
-            $this->_responseContent = @json_decode($this->_responseContent, true);
-        }
-        $this->_responseHeaders = (array)$response->getHeaders();
-    }
-
-    /**
      * Get Pinterest App Version.
      *
      * @return string
      * @throws \PinterestPinner\PinnerException
      */
-    private function _getAppVersion()
+    protected function _getAppVersion()
     {
         if ($this->_appVersion) {
             return $this->_appVersion;
@@ -414,7 +365,7 @@ class Pinner
      * @return string
      * @throws \PinterestPinner\PinnerException
      */
-    private function _getCSRFToken($url = '/login/')
+    protected function _getCSRFToken($url = '/login/')
     {
         if ($this->_csrfToken) {
             return $this->_csrfToken;
@@ -445,7 +396,7 @@ class Pinner
      *
      * @throws \PinterestPinner\PinnerException
      */
-    private function _postLogin()
+    protected function _postLogin()
     {
         if ($this->isLoggedIn) {
             return;
@@ -463,7 +414,7 @@ class Pinner
             'module_path' => 'App()>LoginPage()>Login()>Button(class_name=primary, '
                 . 'text=Log In, type=submit, size=large)',
         );
-        $this->_loadContent('/resource/UserSessionResource/create/', $postData, '/login/');
+        $this->_loadContentAjax('/resource/UserSessionResource/create/', $postData, '/login/');
 
         // Force reload CSRF token, it's different for logged in user
         $this->_csrfToken = null;
@@ -489,7 +440,7 @@ class Pinner
      *
      * @throws \PinterestPinner\PinnerException
      */
-    private function _postPin()
+    protected function _postPin()
     {
         $postData = array(
             'data' => json_encode(array(
@@ -509,7 +460,7 @@ class Pinner
                 . ', type=pinnable, link=' . $this->_link . ')#Modal(module=PinCreate())',
         );
 
-        $this->_loadContent('/resource/PinResource/create/', $postData, '/');
+        $this->_loadContentAjax('/resource/PinResource/create/', $postData, '/');
 
         if (
             isset($this->_responseContent['resource_response']['error'])
@@ -529,7 +480,7 @@ class Pinner
      *
      * @return array|bool
      */
-    private function _responseToArray()
+    protected function _responseToArray()
     {
         if (is_string($this->_responseContent)) {
             preg_match(
@@ -546,7 +497,81 @@ class Pinner
         }
         return false;
     }
+    
+    /**
+     * Set cURL url and get the content from curl_exec() call.
+     *
+     * @param string $url
+     * @param array|boolean|null $dataAjax If array - it will be POST request, if TRUE if will be GET, ajax request.
+     * @param string $referer
+     * @return string
+     * @throws \PinterestPinner\PinnerException
+     */
+    
+    protected function _loadContentAjax($url, $dataAjax = true, $referer = ''){
+        if (is_array($dataAjax)) {
+            $headers = array_merge($this->_httpHeaders, array(
+                'X-NEW-APP' => '1',
+                'X-APP-VERSION' => $this->_getAppVersion(),
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Accept' => 'application/json, text/javascript, */*; q=0.01',
+                'X-CSRFToken' => $this->_getCSRFToken(),
+                'Referer' => self::PINTEREST_URL . $referer,
+            ));
+            $response = $this->_httpRequest('POST', $url, $dataAjax, $headers);
+        } elseif ($dataAjax === true) {
+            $headers = $this->_httpHeaders;
+            
+            $headers = array_merge($headers, array(
+                'X-NEW-APP' => '1',
+                'X-APP-VERSION' => $this->_getAppVersion(),
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Accept' => 'application/json, text/javascript, */*; q=0.01',
+                'X-Pinterest-AppState' => 'active',
+            ));
 
+            $response = $this->_httpRequest('GET', $url, null, $headers);
+        }
+        $this->_parseResponse($response);
+    }
+    
+    /**
+     * Set cURL url and get the content from curl_exec() call.
+     *
+     * @param string $url
+     * @return string
+     * @throws \PinterestPinner\PinnerException
+     */
+    
+    protected function _loadContent($url)
+    {
+        $response = $this->_httpRequest('GET', $url);
+        $this->_parseResponse($response);
+    }
+    
+    /**
+     * Parse the response from _httpRequest().
+     *
+     * @param $response
+     * @return string
+     * @throws \PinterestPinner\PinnerException
+     */
+
+    protected function _parseResponse($response){
+        $code = (int)substr($this->_getResponseStatusCode($response), 0, 2);
+        if ($code !== 20) {
+            throw new PinnerException(
+                'HTTP error (' . $url . '): ' . $this->_getResponseStatusCode($response) . ' ' . $this->_getResponseStatusMessage($response)
+            );
+        }
+
+        $this->_responseContent = (string)$this->_getResponseBody($response);
+        if (substr($this->_responseContent, 0, 1) === '{') {
+            $this->_responseContent = @json_decode($this->_responseContent, true);
+        }
+        $this->_responseHeaders = (array)$this->_getResponseHeaders($response);
+    }
+    
     /**
      * Make a HTTP request to Pinterest.
      *
@@ -554,65 +579,15 @@ class Pinner
      * @param string $urlPath
      * @param null|array $data
      * @param array $headers
-     * @return \Psr\Http\Message\ResponseInterface
      */
-    private function _guzzleRequest($type = 'GET', $urlPath, $data = null, $headers = array())
-    {
-        if (!$this->_httpClient) {
-            if (version_compare(GuzzleClient::VERSION, '6.0.0', '>=')) {
-                $config = array(
-                    'headers' => $this->_httpHeaders,
-                    'cookies' => true,
-                    'verify' => false,
-                );
-            } else {
-                $config = array(
-                    'defaults' => array(
-                        'headers' => $this->_httpHeaders,
-                    ),
-                );
-            }
-            $this->_httpClient = new GuzzleClient($config);
-        }
-
-        $url = self::PINTEREST_URL . $urlPath;
-        if ($type === 'API') {
-            $url = self::PINTEREST_API_URL . $urlPath;
-            $type = 'GET';
-        }
-
-        if (empty($headers)) {
-            $headers = $this->_httpHeaders;
-        }
-
-        if ($type === 'POST') {
-            if (version_compare(GuzzleClient::VERSION, '6.0.0', '>=')) {
-                $response = $this->_httpClient->request('POST', $url, array(
-                    'form_params' => $data,
-                    'headers' => $headers,
-                ));
-            } else {
-                $response = $this->_httpClient->post($url, array(
-                    'headers' => $headers,
-                    'verify' => false,
-                    'cookies' => true,
-                    'body' => $data,
-                ));
-            }
-        } else {
-            if (version_compare(GuzzleClient::VERSION, '6.0.0', '>=')) {
-                $response = $this->_httpClient->request('GET', $url, array(
-                    'headers' => $headers,
-                ));
-            } else {
-                $response = $this->_httpClient->get($url, array(
-                    'headers' => $headers,
-                    'verify' => false,
-                    'cookies' => true,
-                ));
-            }
-        }
-
-        return $response;
-    }
+    abstract protected function _httpRequest($type = 'GET', $urlPath, $data = null, $headers = array());
+    
+    abstract protected function _getResponseStatusCode($response);
+    
+    abstract protected function _getResponseStatusMessage($response);
+    
+    abstract protected function _getResponseBody($response);
+    
+    abstract protected function _getResponseHeaders($response);
+    
 }
