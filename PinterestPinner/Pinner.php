@@ -333,8 +333,8 @@ class Pinner
         $this->_clientInterface->_loadContentAjax('/resource/UserSessionResource/create/', $postData, '/login/');
 
         // Force reload CSRF token, it's different for logged in user
-        $this->_csrfToken = null;
-        $this->_getCSRFToken('/');
+        $this->_clientInterface->_csrfToken = null;
+        $this->_clientInterface->_getCSRFToken('/');
 
         $this->isLoggedIn = true;
 
