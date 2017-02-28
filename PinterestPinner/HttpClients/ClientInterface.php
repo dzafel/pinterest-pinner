@@ -84,12 +84,12 @@ abstract class ClientInterface
         if (!$this->responseContent) {
             $this->loadContent($url);
         }
-
-        if (isset($this->_responseHeaders['Set-Cookie'])) {
-            if (is_array($this->_responseHeaders['Set-Cookie'])) {
-                $content = implode(' ', $this->_responseHeaders['Set-Cookie']);
+        
+        if (isset($this->_responseHeaders['set-cookie'])) {
+            if (is_array($this->_responseHeaders['set-cookie'])) {
+                $content = implode(' ', $this->_responseHeaders['set-cookie']);
             } else {
-                $content = (string)$this->_responseHeaders['Set-Cookie'];
+                $content = (string)$this->_responseHeaders['set-cookie'];
             }
             preg_match('/csrftoken=(.*)[\b;\s]/isU', $content, $match);
             if (isset($match[1]) and $match[1]) {
@@ -173,7 +173,9 @@ abstract class ClientInterface
         if (substr($this->responseContent, 0, 1) === '{') {
             $this->responseContent = @json_decode($this->responseContent, true);
         }
+        
         $this->_responseHeaders = (array)$this->_getResponseHeaders($response);
+        $this->_responseHeaders = array_change_key_case($this->_responseHeaders, CASE_LOWER); //some HTTP clients forces lower case keys while others don't; so force lower case for everybody.
     }
     
     /**
