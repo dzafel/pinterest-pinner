@@ -72,12 +72,15 @@ abstract class ClientInterface
      * Get Pinterest CSRF Token.
      *
      * @param string $url
+     * @param string $force_reset
      * @return string
      * @throws \PinterestPinner\PinnerException
      */
-    protected function _getCSRFToken($url = '/login/')
+    public function getCSRFToken($url = '/login/', $force_reset = false)
     {
-        if ($this->_csrfToken) {
+        if ($force_reset){
+            $this->_csrfToken = null;
+        }elseif ($this->_csrfToken) {
             return $this->_csrfToken;
         }
 
@@ -118,7 +121,7 @@ abstract class ClientInterface
                 'X-APP-VERSION' => $this->_getAppVersion(),
                 'X-Requested-With' => 'XMLHttpRequest',
                 'Accept' => 'application/json, text/javascript, */*; q=0.01',
-                'X-CSRFToken' => $this->_getCSRFToken(),
+                'X-CSRFToken' => $this->getCSRFToken(),
                 'Referer' => self::PINTEREST_URL . $referer,
             ));
             $response = $this->_httpRequest('POST', $url, $dataAjax, $headers);
