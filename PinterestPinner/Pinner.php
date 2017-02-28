@@ -236,47 +236,54 @@ class Pinner
     }
 
     /**
-     * Get user's boards.
+     * Get boards for a user.  If $username is false, get current user's boards.
      *
+     * @param $username
      * @return array
      * @throws \PinterestPinner\PinnerException
      */
-    public function getBoards()
+    public function getBoards($username = null)
     {
-        if (count($this->boards)) {
-            return $this->boards;
-        }
-        $userData = $this->getUserData();
-        if (!isset($userData['username'])) {
-            throw new PinnerException('Missing username in user data.');
-        }
-        $this->_clientInterface->loadContentAjax('/resource/BoardPickerBoardsResource/get/?' . http_build_query(array(
-                'source_url' => '/' . $userData['username'] . '/',
-                'data' => json_encode(array(
-                    'options' => array(
-                        'allow_stale' => true,
-                        'field_set_key' => 'board_picker',
-                        'filter' => 'all',
-                        'shortlist_length' => 1,
-                    ),
-                    'context' => new stdClass,
-                )),
-                'module_path' => 'App>FooterButtons>DropdownButton>Dropdown>AddPin>ShowModalButton(module=PinUploader)'
-                    . '#Modal(showCloseModal=true, mouseDownInModal=false)',
-                '_' => time() . '999',
-            )), true);
-        $this->boards = array();
-        if (
-            isset($this->_clientInterface->responseContent['resource_response']['data']['all_boards'])
-            and is_array($this->_clientInterface->responseContent['resource_response']['data']['all_boards'])
-        ) {
-            foreach ($this->_clientInterface->responseContent['resource_response']['data']['all_boards'] as $board) {
-                if (isset($board['id'], $board['name'])) {
-                    $this->boards[$board['id']] = $board['name'];
-                }
+        if (!$username){
+            $userData = $this->getUserData();
+            if (!isset($userData['username'])) {
+                throw new PinnerException('Missing username in user data.');
+            }else{
+                $username = $userData['username'];
             }
         }
-        return $this->boards;
+        
+        if ( !isset($this->boards[$username]) ) {
+        
+            $this->_clientInterface->loadContentAjax('/resource/BoardsResource/get/?' . http_build_query(array(
+                    'source_url' => '/' . $username . '/',
+                    'data' => json_encode(array(
+                        'options' => array(
+                            'filter'            => 'all',
+                            'field_set_key'     => 'grid_item',
+                            'username'          => $username,
+                            'sort'              => 'profile',
+                        ),
+                        'context' => new stdClass,
+                    )),
+                    '_' => time() . '999',
+                )), true);
+
+            $this->boards[$username] = array();
+            if (
+                isset($this->_clientInterface->responseContent['resource_response']['data'])
+                and is_array($this->_clientInterface->responseContent['resource_response']['data'])
+            ) {
+                foreach ($this->_clientInterface->responseContent['resource_response']['data'] as $board) {
+                    if (isset($board['id'], $board['name'])) {
+                        $this->boards[$username][$board['id']] = $board['name'];
+                    }
+                }
+
+            }
+        }
+        
+        return $this->boards[$username];
     }
 
     /**
