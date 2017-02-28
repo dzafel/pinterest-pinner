@@ -12,7 +12,7 @@ class Guzzle extends ClientInterface
     
     var $config = null;
 
-    public function _getClient(){
+    protected function _getClient(){
         if (version_compare(GuzzleClient::VERSION, '6.0.0', '>=')) {
             $config = array(
                 'headers' => $this->_httpHeaders,
@@ -38,7 +38,7 @@ class Guzzle extends ClientInterface
      * @param array $headers
      * @return \Psr\Http\Message\ResponseInterface
      */
-    public function _httpRequest($type = 'GET', $urlPath, $data = null, $headers = array())
+    protected function _httpRequest($type = 'GET', $urlPath, $data = null, $headers = array())
     {
 
         $url = \PinterestPinner\Pinner::PINTEREST_URL . $urlPath;
@@ -82,22 +82,22 @@ class Guzzle extends ClientInterface
         return $response;
     }
     
-    public function _getResponseStatusCode($response)
+    protected function _getResponseStatusCode($response)
     {
         return $response->getStatusCode();
     }
     
-    public function _getResponseStatusMessage($response)
+    protected function _getResponseStatusMessage($response)
     {
         return $response->getReasonPhrase();
     }
     
-    public function _getResponseBody($response)
+    protected function _getResponseBody($response)
     {
         return $response->getBody();
     }
     
-    public function _getResponseHeaders($response)
+    protected function _getResponseHeaders($response)
     {
         return $response->getHeaders();
     }

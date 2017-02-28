@@ -24,7 +24,7 @@ abstract class ClientInterface
     /**
      * @var string Pinterest page loaded content
      */
-    protected $_responseContent = null;
+    public $responseContent = null;
     
     /**
      * @var array Default requests headers
@@ -55,11 +55,11 @@ abstract class ClientInterface
             return $this->_appVersion;
         }
 
-        if (!$this->_responseContent) {
-            $this->_loadContent('/login/');
+        if (!$this->responseContent) {
+            $this->loadContent('/login/');
         }
 
-        $appJson = $this->_responseToArray();
+        $appJson = $this->responseToArray();
         if ($appJson and isset($appJson['context']['app_version']) and $appJson['context']['app_version']) {
             $this->_appVersion = $appJson['context']['app_version'];
             return $this->_appVersion;
@@ -81,8 +81,8 @@ abstract class ClientInterface
             return $this->_csrfToken;
         }
 
-        if (!$this->_responseContent) {
-            $this->_loadContent($url);
+        if (!$this->responseContent) {
+            $this->loadContent($url);
         }
 
         if (isset($this->_responseHeaders['Set-Cookie'])) {
@@ -111,7 +111,7 @@ abstract class ClientInterface
      * @throws \PinterestPinner\PinnerException
      */
     
-    public function _loadContentAjax($url, $dataAjax = true, $referer = ''){
+    public function loadContentAjax($url, $dataAjax = true, $referer = ''){
         if (is_array($dataAjax)) {
             $headers = array_merge($this->_httpHeaders, array(
                 'X-NEW-APP' => '1',
@@ -146,11 +146,12 @@ abstract class ClientInterface
      * @throws \PinterestPinner\PinnerException
      */
     
-    public function _loadContent($url)
+    public function loadContent($url)
     {
         $response = $this->_httpRequest('GET', $url);
         $this->_parseResponse($response);
     }
+
     
     /**
      * Parse the response from _httpRequest().
@@ -168,9 +169,9 @@ abstract class ClientInterface
             );
         }
 
-        $this->_responseContent = (string)$this->_getResponseBody($response);
-        if (substr($this->_responseContent, 0, 1) === '{') {
-            $this->_responseContent = @json_decode($this->_responseContent, true);
+        $this->responseContent = (string)$this->_getResponseBody($response);
+        if (substr($this->responseContent, 0, 1) === '{') {
+            $this->responseContent = @json_decode($this->responseContent, true);
         }
         $this->_responseHeaders = (array)$this->_getResponseHeaders($response);
     }
@@ -180,12 +181,12 @@ abstract class ClientInterface
      *
      * @return array|bool
      */
-    protected function _responseToArray()
+    public function responseToArray()
     {
-        if (is_string($this->_responseContent)) {
+        if (is_string($this->responseContent)) {
             preg_match(
                 '/<script\s*type="application\/json"\s+id=\'jsInit1\'>\s*(\{.+\})\s*<\/script>/isU',
-                $this->_responseContent,
+                $this->responseContent,
                 $match
             );
             if (isset($match[1]) and $match[1]) {
@@ -202,7 +203,7 @@ abstract class ClientInterface
     * Returns the client used for HTTP requests
     **/
     
-    abstract public function _getClient();
+    abstract protected function _getClient();
     
     /**
      * Make a HTTP request to Pinterest.
@@ -213,14 +214,14 @@ abstract class ClientInterface
      * @param array $headers
      * @return \Psr\Http\Message\ResponseInterface
      */
-    abstract public function _httpRequest($type = 'GET', $urlPath, $data = null, $headers = array());
+    abstract protected function _httpRequest($type = 'GET', $urlPath, $data = null, $headers = array());
     
-    abstract public function _getResponseStatusCode($response);
+    abstract protected function _getResponseStatusCode($response);
     
-    abstract public function _getResponseStatusMessage($response);
+    abstract protected function _getResponseStatusMessage($response);
     
-    abstract public function _getResponseBody($response);
+    abstract protected function _getResponseBody($response);
     
-    abstract public function _getResponseHeaders($response);
+    abstract protected function _getResponseHeaders($response);
 
 }

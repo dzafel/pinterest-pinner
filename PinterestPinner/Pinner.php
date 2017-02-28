@@ -191,11 +191,11 @@ class Pinner
         $this->_postLogin();
         $this->_postPin();
 
-        $this->_pinId = (is_array($this->_clientInterface->_responseContent) and isset($this->_clientInterface->_responseContent['resource_response']['data']['id']))
-            ? $this->_clientInterface->_responseContent['resource_response']['data']['id']
+        $this->_pinId = (is_array($this->_clientInterface->responseContent) and isset($this->_clientInterface->responseContent['resource_response']['data']['id']))
+            ? $this->_clientInterface->responseContent['resource_response']['data']['id']
             : null;
 
-        $this->_clientInterface->_responseContent = null;
+        $this->_clientInterface->responseContent = null;
 
         return $this->getPinID();
     }
@@ -250,7 +250,7 @@ class Pinner
         if (!isset($userData['username'])) {
             throw new PinnerException('Missing username in user data.');
         }
-        $this->_clientInterface->_loadContentAjax('/resource/BoardPickerBoardsResource/get/?' . http_build_query(array(
+        $this->_clientInterface->loadContentAjax('/resource/BoardPickerBoardsResource/get/?' . http_build_query(array(
                 'source_url' => '/' . $userData['username'] . '/',
                 'data' => json_encode(array(
                     'options' => array(
@@ -267,10 +267,10 @@ class Pinner
             )), true);
         $this->boards = array();
         if (
-            isset($this->_clientInterface->_responseContent['resource_response']['data']['all_boards'])
-            and is_array($this->_clientInterface->_responseContent['resource_response']['data']['all_boards'])
+            isset($this->_clientInterface->responseContent['resource_response']['data']['all_boards'])
+            and is_array($this->_clientInterface->responseContent['resource_response']['data']['all_boards'])
         ) {
-            foreach ($this->_clientInterface->_responseContent['resource_response']['data']['all_boards'] as $board) {
+            foreach ($this->_clientInterface->responseContent['resource_response']['data']['all_boards'] as $board) {
                 if (isset($board['id'], $board['name'])) {
                     $this->boards[$board['id']] = $board['name'];
                 }
@@ -293,9 +293,9 @@ class Pinner
 
         $this->_postLogin();
 
-        $this->_clientInterface->_loadContent('/me/');
+        $this->_clientInterface->loadContent('/me/');
 
-        $appJson = $this->_clientInterface->_responseToArray();
+        $appJson = $this->_clientInterface->responseToArray();
         if (
             $appJson
             and isset($appJson['tree']['data'], $appJson['tree']['data']['username'])
@@ -330,7 +330,7 @@ class Pinner
             'module_path' => 'App()>LoginPage()>Login()>Button(class_name=primary, '
                 . 'text=Log In, type=submit, size=large)',
         );
-        $this->_clientInterface->_loadContentAjax('/resource/UserSessionResource/create/', $postData, '/login/');
+        $this->_clientInterface->loadContentAjax('/resource/UserSessionResource/create/', $postData, '/login/');
 
         // Force reload CSRF token, it's different for logged in user
         $this->_clientInterface->_csrfToken = null;
@@ -339,13 +339,13 @@ class Pinner
         $this->isLoggedIn = true;
 
         if (
-            isset($this->_clientInterface->_responseContent['resource_response']['error'])
-            and $this->_clientInterface->_responseContent['resource_response']['error']
+            isset($this->_clientInterface->responseContent['resource_response']['error'])
+            and $this->_clientInterface->responseContent['resource_response']['error']
         ) {
-            throw new PinnerException($this->_clientInterface->_responseContent['resource_response']['error']);
+            throw new PinnerException($this->_clientInterface->responseContent['resource_response']['error']);
         } elseif (
-            !isset($this->_clientInterface->_responseContent['resource_response']['data'])
-            or !$this->_clientInterface->_responseContent['resource_response']['data']
+            !isset($this->_clientInterface->responseContent['resource_response']['data'])
+            or !$this->_clientInterface->responseContent['resource_response']['data']
         ) {
             throw new PinnerException('Unknown error while logging in.');
         }
@@ -376,16 +376,16 @@ class Pinner
                 . ', type=pinnable, link=' . $this->_link . ')#Modal(module=PinCreate())',
         );
 
-        $this->_clientInterface->_loadContentAjax('/resource/PinResource/create/', $postData, '/');
+        $this->_clientInterface->loadContentAjax('/resource/PinResource/create/', $postData, '/');
 
         if (
-            isset($this->_clientInterface->_responseContent['resource_response']['error'])
-            and $this->_clientInterface->_responseContent['resource_response']['error']
+            isset($this->_clientInterface->responseContent['resource_response']['error'])
+            and $this->_clientInterface->responseContent['resource_response']['error']
         ) {
-            throw new PinnerException($this->_clientInterface->_responseContent['resource_response']['error']);
+            throw new PinnerException($this->_clientInterface->responseContent['resource_response']['error']);
         } elseif (
-            !isset($this->_clientInterface->_responseContent['resource_response']['data']['id'])
-            or !$this->_clientInterface->_responseContent['resource_response']['data']['id']
+            !isset($this->_clientInterface->responseContent['resource_response']['data']['id'])
+            or !$this->_clientInterface->responseContent['resource_response']['data']['id']
         ) {
             throw new PinnerException('Unknown error while creating a pin.');
         }
