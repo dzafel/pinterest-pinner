@@ -165,11 +165,11 @@ abstract class ClientInterface
      */
 
     protected function _parseResponse($response){
-
+        
         $code = (int)substr($this->_getResponseStatusCode($response), 0, 2);
         if ($code !== 20) {
             throw new \PinterestPinner\PinnerException(
-                'HTTP error (' . $url . '): ' . $this->_getResponseStatusCode($response) . ' ' . $this->_getResponseStatusMessage($response)
+                'HTTP error (' . $this->_getResponseUrl($response) . '): ' . $this->_getResponseStatusCode($response) . ' ' . $this->_getResponseStatusMessage($response)
             );
         }
 
@@ -231,5 +231,7 @@ abstract class ClientInterface
     abstract protected function _getResponseBody($response);
     
     abstract protected function _getResponseHeaders($response);
+    
+    abstract protected function _getResponseUrl($response);
 
 }

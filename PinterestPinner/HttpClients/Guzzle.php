@@ -101,5 +101,9 @@ class Guzzle extends ClientInterface
     {
         return $response->getHeaders();
     }
+    
+    protected function _getResponseUrl($response){
+        return $response->getUri();
+    }
 
 }
