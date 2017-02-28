@@ -122,7 +122,7 @@ abstract class ClientInterface
                 'X-Requested-With' => 'XMLHttpRequest',
                 'Accept' => 'application/json, text/javascript, */*; q=0.01',
                 'X-CSRFToken' => $this->getCSRFToken(),
-                'Referer' => self::PINTEREST_URL . $referer,
+                'Referer' => \PinterestPinner\Pinner::PINTEREST_URL . $referer,
             ));
             $response = $this->_httpRequest('POST', $url, $dataAjax, $headers);
         } elseif ($dataAjax === true) {
