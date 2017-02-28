@@ -9,6 +9,9 @@ use GuzzleHttp\Client as GuzzleClient;
 
 class Guzzle extends ClientInterface
 {    
+    
+    var $config = null;
+    
     /**
      * Make a HTTP request to Pinterest.
      *
@@ -37,9 +40,9 @@ class Guzzle extends ClientInterface
             $this->_httpClient = new GuzzleClient($config);
         }
 
-        $url = self::PINTEREST_URL . $urlPath;
+        $url = \PinterestPinner\Pinner::PINTEREST_URL . $urlPath;
         if ($type === 'API') {
-            $url = self::PINTEREST_API_URL . $urlPath;
+            $url = \PinterestPinner\Pinner::PINTEREST_API_URL . $urlPath;
             $type = 'GET';
         }
 
