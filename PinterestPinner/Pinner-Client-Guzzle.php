@@ -11,6 +11,23 @@ class Guzzle extends ClientInterface
 {    
     
     var $config = null;
+
+    public function _getClient(){
+        if (version_compare(GuzzleClient::VERSION, '6.0.0', '>=')) {
+            $config = array(
+                'headers' => $this->_httpHeaders,
+                'cookies' => true,
+                'verify' => false,
+            );
+        } else {
+            $config = array(
+                'defaults' => array(
+                    'headers' => $this->_httpHeaders,
+                ),
+            );
+        }
+        return new GuzzleClient($config);
+    }
     
     /**
      * Make a HTTP request to Pinterest.
@@ -23,22 +40,6 @@ class Guzzle extends ClientInterface
      */
     public function _httpRequest($type = 'GET', $urlPath, $data = null, $headers = array())
     {
-        if (!$this->_httpClient) {
-            if (version_compare(GuzzleClient::VERSION, '6.0.0', '>=')) {
-                $config = array(
-                    'headers' => $this->_httpHeaders,
-                    'cookies' => true,
-                    'verify' => false,
-                );
-            } else {
-                $config = array(
-                    'defaults' => array(
-                        'headers' => $this->_httpHeaders,
-                    ),
-                );
-            }
-            $this->_httpClient = new GuzzleClient($config);
-        }
 
         $url = \PinterestPinner\Pinner::PINTEREST_URL . $urlPath;
         if ($type === 'API') {

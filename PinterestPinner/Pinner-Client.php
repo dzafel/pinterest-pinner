@@ -40,6 +40,7 @@ abstract class ClientInterface
             'Accept-Language' => 'en-US,en;q=0.5',
             'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML => like Gecko) Iron/31.0.1700.0 Chrome/31.0.1700.0',
         );
+        $this->_httpClient = $this->_getClient();
     }
     
     /**
@@ -196,6 +197,12 @@ abstract class ClientInterface
         }
         return false;
     }
+    
+    /**
+    * Returns the client used for HTTP requests
+    **/
+    
+    abstract public function _getClient();
     
     /**
      * Make a HTTP request to Pinterest.
