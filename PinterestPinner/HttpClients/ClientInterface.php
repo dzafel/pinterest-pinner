@@ -138,7 +138,7 @@ abstract class ClientInterface
 
             $response = $this->_httpRequest('GET', $url, null, $headers);
         }
-        $this->_parseJsonResponse($response);
+        $this->_parseResponse($response);
     }
     
     /**
@@ -152,7 +152,7 @@ abstract class ClientInterface
     public function loadContent($url)
     {
         $response = $this->_httpRequest('GET', $url);
-        $this->_parseJsonResponse($response);
+        $this->_parseResponse($response);
     }
     
     
@@ -164,7 +164,8 @@ abstract class ClientInterface
      * @throws \PinterestPinner\PinnerException
      */
 
-    protected function _parseJsonResponse($response){
+    protected function _parseResponse($response){
+
         $code = (int)substr($this->_getResponseStatusCode($response), 0, 2);
         if ($code !== 20) {
             throw new \PinterestPinner\PinnerException(
@@ -173,6 +174,8 @@ abstract class ClientInterface
         }
 
         $this->responseContent = (string)$this->_getResponseBody($response);
+        
+        //maybe decode JSON
         if (substr($this->responseContent, 0, 1) === '{') {
             $this->responseContent = @json_decode($this->responseContent, true);
         }
