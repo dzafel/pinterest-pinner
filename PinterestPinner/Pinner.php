@@ -295,7 +295,7 @@ class Pinner
 
         $this->_clientInterface->loadContent('/me/');
 
-        $appJson = $this->_clientInterface->responseToArray();
+        $appJson = $this->_clientInterface->getScriptTagData();
         if (
             $appJson
             and isset($appJson['tree']['data'], $appJson['tree']['data']['username'])

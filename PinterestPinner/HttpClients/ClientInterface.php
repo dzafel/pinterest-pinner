@@ -59,7 +59,7 @@ abstract class ClientInterface
             $this->loadContent('/login/');
         }
 
-        $appJson = $this->responseToArray();
+        $appJson = $this->getScriptTagData();
         if ($appJson and isset($appJson['context']['app_version']) and $appJson['context']['app_version']) {
             $this->_appVersion = $appJson['context']['app_version'];
             return $this->_appVersion;
@@ -177,11 +177,11 @@ abstract class ClientInterface
     }
     
     /**
-     * Get data array from JSON response.
+     * Get JSON data from the <script></script> tag of the HTML and convert it to an array
      *
      * @return array|bool
      */
-    public function responseToArray()
+    public function getScriptTagData()
     {
         if (is_string($this->responseContent)) {
             preg_match(
