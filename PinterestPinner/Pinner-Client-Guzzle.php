@@ -1,14 +1,13 @@
 <?php
-namespace PinterestPinner;
+namespace PinterestPinner\HttpClients;
 
 use GuzzleHttp\Client as GuzzleClient;
 
 /*
-* Child class for the PinnerNoWebClient
 * uses Guzzle for web requests.
 */
 
-class Pinner_Guzzle extends Pinner
+class Guzzle extends ClientInterface
 {    
     /**
      * Make a HTTP request to Pinterest.
@@ -19,7 +18,7 @@ class Pinner_Guzzle extends Pinner
      * @param array $headers
      * @return \Psr\Http\Message\ResponseInterface
      */
-    protected function _httpRequest($type = 'GET', $urlPath, $data = null, $headers = array())
+    public function _httpRequest($type = 'GET', $urlPath, $data = null, $headers = array())
     {
         if (!$this->_httpClient) {
             if (version_compare(GuzzleClient::VERSION, '6.0.0', '>=')) {
@@ -79,22 +78,22 @@ class Pinner_Guzzle extends Pinner
         return $response;
     }
     
-    protected function _getResponseStatusCode($response)
+    public function _getResponseStatusCode($response)
     {
         return $response->getStatusCode();
     }
     
-    protected function _getResponseStatusMessage($response)
+    public function _getResponseStatusMessage($response)
     {
         return $response->getReasonPhrase();
     }
     
-    protected function _getResponseBody($response)
+    public function _getResponseBody($response)
     {
         return $response->getBody();
     }
     
-    protected function _getResponseHeaders($response)
+    public function _getResponseHeaders($response)
     {
         return $response->getHeaders();
     }

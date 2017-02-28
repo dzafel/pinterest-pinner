@@ -11,7 +11,7 @@ use stdClass;
  * @license GPLv2
  */
 
-abstract class Pinner
+class Pinner
 {
     /**
      * Pinterest.com base URL
@@ -91,7 +91,7 @@ abstract class Pinner
     /*
      * Initialize HTTP Client and set default variables.
      */
-    public function __construct()
+    public function __construct(\PinterestPinner\HttpClients\ClientInterface $client = null)
     {
         // Default HTTP headers for requests
         $this->_httpHeaders = array(
@@ -101,6 +101,9 @@ abstract class Pinner
             'Accept-Language' => 'en-US,en;q=0.5',
             'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML => like Gecko) Iron/31.0.1700.0 Chrome/31.0.1700.0',
         );
+        
+        $this->_httpClient = is_object($client) ? $client : new \PinterestPinner\HttpClients\Guzzle;
+        
     }
 
     /**
@@ -237,7 +240,7 @@ abstract class Pinner
     {
         $userData = $this->getUserData();
         if (isset($userData['username'])) {
-            $response = $this->_httpRequest(
+            $response = $this->_httpClient->_httpRequest(
                 'API',
                 '/v3/pidgets/users/' . urlencode($userData['username']) . '/pins/'
             );
@@ -518,7 +521,7 @@ abstract class Pinner
                 'X-CSRFToken' => $this->_getCSRFToken(),
                 'Referer' => self::PINTEREST_URL . $referer,
             ));
-            $response = $this->_httpRequest('POST', $url, $dataAjax, $headers);
+            $response = $this->_httpClient->_httpRequest('POST', $url, $dataAjax, $headers);
         } elseif ($dataAjax === true) {
             $headers = $this->_httpHeaders;
             
@@ -530,7 +533,7 @@ abstract class Pinner
                 'X-Pinterest-AppState' => 'active',
             ));
 
-            $response = $this->_httpRequest('GET', $url, null, $headers);
+            $response = $this->_httpClient->_httpRequest('GET', $url, null, $headers);
         }
         $this->_parseResponse($response);
     }
@@ -545,7 +548,7 @@ abstract class Pinner
     
     protected function _loadContent($url)
     {
-        $response = $this->_httpRequest('GET', $url);
+        $response = $this->_httpClient->_httpRequest('GET', $url);
         $this->_parseResponse($response);
     }
     
@@ -558,36 +561,18 @@ abstract class Pinner
      */
 
     protected function _parseResponse($response){
-        $code = (int)substr($this->_getResponseStatusCode($response), 0, 2);
+        $code = (int)substr($this->_httpClient->_getResponseStatusCode($response), 0, 2);
         if ($code !== 20) {
             throw new PinnerException(
-                'HTTP error (' . $url . '): ' . $this->_getResponseStatusCode($response) . ' ' . $this->_getResponseStatusMessage($response)
+                'HTTP error (' . $url . '): ' . $this->_httpClient->_getResponseStatusCode($response) . ' ' . $this->_httpClient->_getResponseStatusMessage($response)
             );
         }
 
-        $this->_responseContent = (string)$this->_getResponseBody($response);
+        $this->_responseContent = (string)$this->_httpClient->_getResponseBody($response);
         if (substr($this->_responseContent, 0, 1) === '{') {
             $this->_responseContent = @json_decode($this->_responseContent, true);
         }
-        $this->_responseHeaders = (array)$this->_getResponseHeaders($response);
+        $this->_responseHeaders = (array)$this->_httpClient->_getResponseHeaders($response);
     }
-    
-    /**
-     * Make a HTTP request to Pinterest.
-     *
-     * @param string $type
-     * @param string $urlPath
-     * @param null|array $data
-     * @param array $headers
-     */
-    abstract protected function _httpRequest($type = 'GET', $urlPath, $data = null, $headers = array());
-    
-    abstract protected function _getResponseStatusCode($response);
-    
-    abstract protected function _getResponseStatusMessage($response);
-    
-    abstract protected function _getResponseBody($response);
-    
-    abstract protected function _getResponseHeaders($response);
     
 }
