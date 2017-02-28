@@ -135,7 +135,7 @@ abstract class ClientInterface
 
             $response = $this->_httpRequest('GET', $url, null, $headers);
         }
-        $this->_parseResponse($response);
+        $this->_parseJsonResponse($response);
     }
     
     /**
@@ -149,9 +149,9 @@ abstract class ClientInterface
     public function loadContent($url)
     {
         $response = $this->_httpRequest('GET', $url);
-        $this->_parseResponse($response);
+        $this->_parseJsonResponse($response);
     }
-
+    
     
     /**
      * Parse the response from _httpRequest().
@@ -161,7 +161,7 @@ abstract class ClientInterface
      * @throws \PinterestPinner\PinnerException
      */
 
-    protected function _parseResponse($response){
+    protected function _parseJsonResponse($response){
         $code = (int)substr($this->_getResponseStatusCode($response), 0, 2);
         if ($code !== 20) {
             throw new \PinterestPinner\PinnerException(
