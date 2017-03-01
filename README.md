@@ -30,7 +30,7 @@ To add a new pin:
 
 ```php
 try {
-    $pinterest = new PinterestPinner\Pinner;
+    $pinterest = new \PinterestPinner\Pinner;
     $pin_id = $pinterest->setLogin('Your Pinterest Login')
         ->setPassword('Your Pinterest Password')
         ->setBoardID('Pinterest Board ID')
@@ -38,7 +38,7 @@ try {
         ->setDescription('Pin Description')
         ->setLink('Pin Link')
         ->pin();
-} catch (PinterestPinner\PinnerException $e) {
+} catch (\PinterestPinner\PinnerException $e) {
     echo $e->getMessage();
 }
 ```
