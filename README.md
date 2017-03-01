@@ -12,14 +12,14 @@ _PinterestPinner is not a way to avoid any Pinterest terms, conditions, rules an
 
 You can easily install PinterestPinner with the following command:
 
-`composer require dzafel/pinterest-pinner:dev-master`
+`composer require dzafel/pinterest-pinner:2.*`
 
 or alternatively, include a dependency for `dzafel/pinterest-pinner` in your `composer.json` file. For example:
 
 ```json
 {
     "require": {
-        "dzafel/pinterest-pinner": "dev-master"
+        "dzafel/pinterest-pinner": "2.*"
     }
 }
 ```
